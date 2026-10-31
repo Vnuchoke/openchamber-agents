@@ -4,38 +4,38 @@ import { DATA_DIR, GLOBAL_PATH, LIBRARY_PATH, type Files } from '../core/types.t
 const errorCode = (error: unknown): unknown => error && typeof error === 'object' && 'code' in error ? error.code : undefined;
 type Operation = 'read' | 'write' | 'list';
 const targetLabel = (path: string, operation: Operation): string => {
-  if (path === GLOBAL_PATH) return '全局规则';
-  if (path === LIBRARY_PATH) return '方案库';
-  if (path === `${DATA_DIR}/backups` && operation === 'list') return '备份列表';
-  if (path.startsWith(`${DATA_DIR}/backups/`)) return '备份文件';
-  if (path.startsWith(`${DATA_DIR}/exports/`)) return '导出文件';
-  return operation === 'list' ? '文件列表' : '文件';
+  if (path === GLOBAL_PATH) return 'global rules';
+  if (path === LIBRARY_PATH) return 'profile library';
+  if (path === `${DATA_DIR}/backups` && operation === 'list') return 'backup list';
+  if (path.startsWith(`${DATA_DIR}/backups/`)) return 'backup file';
+  if (path.startsWith(`${DATA_DIR}/exports/`)) return 'export file';
+  return operation === 'list' ? 'file list' : 'file';
 };
 const hostErrorMessage = (error: unknown, nonLatinDirectory = false): string => {
   const code = errorCode(error);
-  if (code === 'NOT_GRANTED') return '请在设置 → 扩展中允许“规则方案”访问声明的规则文件与方案目录。';
-  if (code === 'DENIED') return '文件权限不足，请检查规则文件或方案目录的权限。';
-  if (code === 'HOST_TIMEOUT') return '宿主响应超时，请重新读取文件以确认实际状态，再继续操作。';
-  if (code === 'BAD_PATH') return '目标路径不在授权范围内，或符号链接指向了其他目录。';
+  if (code === 'NOT_GRANTED') return 'In Settings → Extensions, allow AGENTS.md Manager to access its declared rules file and profile directory.';
+  if (code === 'DENIED') return 'Insufficient file permissions. Check permissions on the rules file or profile directory.';
+  if (code === 'HOST_TIMEOUT') return 'The host timed out. Refresh to confirm the actual file state before continuing.';
+  if (code === 'BAD_PATH') return 'The target path is outside the granted scope, or a symbolic link points to another directory.';
   if (code === 'HOST_REJECTED') {
     const message = error instanceof Error ? error.message : '';
     // 2.4.0 puts the current directory into a Headers value before its try/catch,
     // including for global files. Only diagnose that case for its exact fallback.
     if (nonLatinDirectory && message === 'Extension operation failed.') {
-      return '当前工作目录含中文等字符，触发了 OpenChamber 文件接口的兼容问题。可暂时在无项目会话中从右侧打开“规则方案”。';
+      return 'The current directory contains characters outside Latin-1, triggering an OpenChamber file API compatibility issue. As a workaround, open AGENTS.md Manager from the right sidebar in a session without a project.';
     }
     if (!message || message === 'Extension operation failed.' || message === 'File operation failed.') {
-      return 'OpenChamber 文件接口返回异常，未提供具体原因。请重新读取；持续失败时重新加载面板。';
+      return 'The OpenChamber file API failed without a specific reason. Refresh; if it keeps failing, reload the panel.';
     }
   }
-  return error instanceof Error ? error.message : '操作未完成，请重试。';
+  return error instanceof Error ? error.message : 'The operation did not complete. Try again.';
 };
 
 export class FileOperationError extends Error {
   readonly code: unknown;
   constructor(operation: Operation, path: string, cause: unknown, nonLatinDirectory: boolean) {
-    const action = operation === 'write' ? '写入' : '读取';
-    super(`${action}${targetLabel(path, operation)}失败：${hostErrorMessage(cause, nonLatinDirectory)}${operation === 'write' ? ' 写入结果尚未确认，请先重新读取实际状态，勿直接重复写入。' : ''}`, { cause });
+    const action = operation === 'write' ? 'write' : 'read';
+    super(`Failed to ${action} ${targetLabel(path, operation)}: ${hostErrorMessage(cause, nonLatinDirectory)}${operation === 'write' ? ' The write result is unconfirmed. Refresh to check the actual state. Do not repeat the write without checking.' : ''}`, { cause });
     this.name = 'FileOperationError';
     this.code = errorCode(cause);
   }

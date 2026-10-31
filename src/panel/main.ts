@@ -35,14 +35,14 @@ const save = async () => {
   state.loaded = await repo.save(state.loaded, state.draft);
   const saved = state.loaded.library.profiles.find(item => item.id === state.draft.id) ?? state.loaded.library.profiles.at(-1)!;
   state.draft = { id: saved.id, name: saved.name, content: saved.content }; baseline = { ...state.draft }; state.dirty = false;
-  notice('方案已保存，全局文件未改动。', 'success');
+  notice('Profile saved. The global file was not changed.', 'success');
 };
 const refresh = async () => {
   const keepDraft = state.dirty;
   try { state.loaded = await repo.load(true); }
   catch (error) {
     if (state.review) state.reviewInvalid = true;
-    if (state.loaded) throw new Error(`${explainError(error)} 当前仍显示上次读取结果${keepDraft ? '，未保存草稿已保留' : ''}。`, { cause: error });
+    if (state.loaded) throw new Error(`${explainError(error)} Still showing the last read result.${keepDraft ? ' Your unsaved draft has been kept.' : ''}`, { cause: error });
     throw error;
   }
   if (!keepDraft) {
@@ -52,18 +52,18 @@ const refresh = async () => {
   }
   state.review = null; state.reviewInvalid = false;
   state.backups = await repo.listBackups();
-  notice(keepDraft ? '已重新读取磁盘状态，当前草稿已保留。保存会以新读取的方案库为基础。' : '已读取全局文件与方案库。', 'info');
+  notice(keepDraft ? 'Disk state refreshed. Your draft has been kept. Saving will use the refreshed profile library.' : 'Global file and profile library loaded.', 'info');
 };
 const select = (id: string) => guard(() => { const profile = state.loaded?.library.profiles.find(item => item.id === id); if (profile) useDraft(profile); });
 const actions: Record<Action, () => void> = {
   refresh: () => { void run(refresh); },
-  new: () => guard(() => { useDraft({ name: '新方案', content: '' }, true); view.focusName(); }),
-  copy: () => guard(() => { useDraft({ name: `${state.draft.name.slice(0, 55)} 副本`, content: state.draft.content }, true); view.focusName(); }),
+  new: () => guard(() => { useDraft({ name: 'New profile', content: '' }, true); view.focusName(); }),
+  copy: () => guard(() => { useDraft({ name: `${state.draft.name.slice(0, 55)} Copy`, content: state.draft.content }, true); view.focusName(); }),
   import: () => guard(() => view.pickFile()),
   save: () => { void run(save); },
   preview: () => { void run(async () => { if (!state.loaded || !state.draft.id || state.dirty) return; state.review = await repo.reviewProfile(state.loaded, state.draft.id); state.reviewInvalid = false; }); },
-  export: () => { void run(async () => { const profile = state.loaded?.library.profiles.find(item => item.id === state.draft.id); if (profile) notice(`已导出到当前连接服务器：${await repo.exportProfile(profile)}`, 'success'); }); },
-  archive: () => { void run(async () => { const profile = state.loaded?.library.profiles.find(item => item.id === state.draft.id); if (!state.loaded || !profile) return; state.loaded = await repo.archive(state.loaded, profile.id, !profile.archived); state.showArchived = true; notice(profile.archived ? '方案已恢复。' : '方案已归档，可随时恢复。', 'success'); }); },
+  export: () => { void run(async () => { const profile = state.loaded?.library.profiles.find(item => item.id === state.draft.id); if (profile) notice(`Exported on the connected server: ${await repo.exportProfile(profile)}`, 'success'); }); },
+  archive: () => { void run(async () => { const profile = state.loaded?.library.profiles.find(item => item.id === state.draft.id); if (!state.loaded || !profile) return; state.loaded = await repo.archive(state.loaded, profile.id, !profile.archived); state.showArchived = true; notice(profile.archived ? 'Profile unarchived.' : 'Profile archived. You can unarchive it at any time.', 'success'); }); },
   archives: () => guard(() => { state.showArchived = !state.showArchived; if (!state.showArchived && state.loaded?.library.profiles.find(item => item.id === state.draft.id)?.archived) { const next = state.loaded.library.profiles.find(item => !item.archived); useDraft(next ?? { name: '', content: '' }); } render(); }),
   guardSave: () => { void run(async () => { await save(); const next = pending; pending = null; state.pending = false; next?.(); }); },
   guardDiscard: () => { state.draft = { ...baseline }; state.dirty = false; const next = pending; pending = null; state.pending = false; next?.(); render(); },
@@ -73,8 +73,8 @@ const actions: Record<Action, () => void> = {
     if (!state.loaded || !state.review || state.reviewInvalid) return;
     try {
       const result = await repo.apply(state.loaded, state.review); state.loaded.global = result.global; state.review = null;
-      notice(result.backup ? '全局文件已更新，原内容已备份。请在新会话确认规则加载。' : '全局文件已确认，请在新会话检查规则加载。', 'success');
-      try { state.backups = await repo.listBackups(); } catch { notice('全局文件已更新，但备份列表读取失败；可点击重新读取。', 'warning'); }
+      notice(result.backup ? 'Global file updated. Original content backed up. Confirm rule loading in a new session.' : 'Global file confirmed. Check rule loading in a new session.', 'success');
+      try { state.backups = await repo.listBackups(); } catch { notice('Global file updated, but the backup list could not be read. Click Refresh.', 'warning'); }
     } catch (error) {
       // A timeout can occur after a successful write. Never encourage a blind retry.
       state.reviewInvalid = true;
@@ -91,9 +91,9 @@ const view = mountView(document.querySelector<HTMLElement>('#root')!, {
   tab: id => { if (state.busy || state.pending) return; state.tab = id === 'backups' ? 'backups' : 'profiles'; render(); if (id === 'backups') void run(async () => { state.backups = await repo.listBackups(); }); },
   backup: id => { void run(async () => { state.backup = await repo.readBackup(id); }); },
   file: file => { void run(async () => {
-    if (file.size > MAX_CONTENT * 4) throw new Error('导入文件过大，请使用不超过 100,000 字符的规则文件。');
-    const content = await file.text(); const name = file.name.replace(/\.(md|txt)$/i, '').slice(0, 60) || '导入方案'; validateDraft(name, content);
-    useDraft({ name, content }, true); notice('已导入为草稿，保存后可预览启用。');
+    if (file.size > MAX_CONTENT * 4) throw new Error('The import file is too large. Use a rules file with no more than 100,000 characters.');
+    const content = await file.text(); const name = file.name.replace(/\.(md|txt)$/i, '').slice(0, 60) || 'Imported profile'; validateDraft(name, content);
+    useDraft({ name, content }, true); notice('Imported as a draft. Save it to preview activation.');
   }); },
 });
 document.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); if (state.dirty && !state.pending && !state.review) actions.save(); } });

@@ -21,7 +21,7 @@ const fixture = (initial: string | null = '# 团队规则\n先运行检查。\n'
 test('status reads never create a library; initial import preserves global byte for byte', async () => {
   const f = fixture(); const before = f.disk.get(GLOBAL_PATH);
   assert.equal((await f.repo.load(false)).library.profiles.length, 0); assert.deepEqual(f.writes, []);
-  const loaded = await f.repo.load(true); assert.equal(matchedProfile(loaded)?.name, '现有全局规则');
+  const loaded = await f.repo.load(true); assert.equal(matchedProfile(loaded)?.name, 'Existing global rules');
   assert.equal(f.disk.get(GLOBAL_PATH), before); assert.deepEqual(f.writes, [LIBRARY_PATH]);
 });
 test('saving and reviewing do not activate; apply backs up before writing and reads back', async () => {
@@ -45,7 +45,7 @@ test('backup write failure aborts activation', async () => {
 test('backup readback failure aborts activation', async () => {
   const f = fixture(); const { loaded, review } = await f.prepare(); const before = f.disk.get(GLOBAL_PATH);
   f.files.write = async (path) => { f.disk.set(path, 'corrupted'); };
-  await assert.rejects(f.repo.apply(loaded, review), /备份校验失败/); assert.equal(f.disk.get(GLOBAL_PATH), before);
+  await assert.rejects(f.repo.apply(loaded, review), /Backup verification failed/); assert.equal(f.disk.get(GLOBAL_PATH), before);
 });
 test('external edit after preview is preserved', async () => {
   const f = fixture(); const { loaded, review } = await f.prepare(); f.disk.set(GLOBAL_PATH, 'external');
@@ -70,10 +70,10 @@ test('global write failure retains the recoverable backup', async () => {
 test('global readback detects a writer that won after activation', async () => {
   const f = fixture(); const { loaded, review } = await f.prepare(); const write = f.files.write;
   f.files.write = async (path, content) => { await write(path, content); if (path === GLOBAL_PATH) f.disk.set(path, 'newer writer'); };
-  await assert.rejects(f.repo.apply(loaded, review), /写入后文件内容/); assert.equal(f.disk.get(GLOBAL_PATH), 'newer writer');
+  await assert.rejects(f.repo.apply(loaded, review), /File content after writing/); assert.equal(f.disk.get(GLOBAL_PATH), 'newer writer');
 });
 test('corrupt libraries are not reset; stale edits and simultaneous initialization are rejected', async () => {
-  const f = fixture(); f.disk.set(LIBRARY_PATH, '{broken'); await assert.rejects(f.repo.load(true), /格式有误/); assert.deepEqual(f.writes, []);
+  const f = fixture(); f.disk.set(LIBRARY_PATH, '{broken'); await assert.rejects(f.repo.load(true), /Invalid profile library/); assert.deepEqual(f.writes, []);
   f.disk.delete(LIBRARY_PATH); const old = await f.repo.load(true);
   await f.repo.save(old, { name: 'First', content: 'A' });
   await assert.rejects(f.repo.save(old, { name: 'Second', content: 'B' }), ConflictError);
@@ -83,9 +83,9 @@ test('corrupt libraries are not reset; stale edits and simultaneous initializati
 });
 test('archive is reversible, and refuses the profile matching actual global contents', async () => {
   const f = fixture(); const { loaded, review } = await f.prepare();
-  await assert.rejects(f.repo.archive(loaded, loaded.library.profiles[0].id, true), /当前全局文件一致/);
+  await assert.rejects(f.repo.archive(loaded, loaded.library.profiles[0].id, true), /matches the current global file/);
   let next = await f.repo.archive(loaded, review.profileId!, true); assert.equal(next.library.profiles.at(-1)!.archived, true);
-  await assert.rejects(f.repo.reviewProfile(next, review.profileId!), /未归档/);
+  await assert.rejects(f.repo.reviewProfile(next, review.profileId!), /unarchived/);
   next = await f.repo.archive(next, review.profileId!, false); assert.equal(next.library.profiles.at(-1)!.archived, false);
 });
 test('restoring a backup first backs up the current global file', async () => {
@@ -100,15 +100,48 @@ test('empty rules are backed up and may be restored', async () => {
 });
 test('validation rejects malformed files, traversal, duplicate names and oversized drafts', async () => {
   const f = fixture(); const loaded = await f.repo.load(true);
-  assert.throws(() => parseLibrary('{"version":9,"profiles":[]}'), /格式有误/);
-  const broken = structuredClone(loaded.library); broken.profiles[0].id = '../escape'; assert.throws(() => parseLibrary(JSON.stringify(broken)), /格式有误/);
-  assert.throws(() => validateDraft(' ', ''), /名称/); assert.throws(() => validateDraft('valid', '\0'), /空字节/);
+  assert.throws(() => parseLibrary('{"version":9,"profiles":[]}'), /Invalid profile library/);
+  const broken = structuredClone(loaded.library); broken.profiles[0].id = '../escape'; assert.throws(() => parseLibrary(JSON.stringify(broken)), /Invalid profile library/);
+  assert.throws(() => validateDraft(' ', ''), /name/); assert.throws(() => validateDraft('valid', '\0'), /null bytes/);
   assert.throws(() => validateDraft('valid', 'a'.repeat(100001)), /100,000/);
-  await assert.rejects(f.repo.save(loaded, { name: '现有全局规则', content: '' }), /同名/);
-  await assert.rejects(f.repo.readBackup('../../AGENTS'), /编号无效/);
-  await assert.rejects(f.repo.exportProfile({ ...loaded.library.profiles[0], id: '../escape' }), /编号无效/);
+  await assert.rejects(f.repo.save(loaded, { name: loaded.library.profiles[0].name, content: '' }), /same name/);
+  await assert.rejects(f.repo.readBackup('../../AGENTS'), /Invalid backup ID/);
+  await assert.rejects(f.repo.exportProfile({ ...loaded.library.profiles[0], id: '../escape' }), /Invalid profile ID/);
 });
 test('exports contain exact saved plain text without changing the global file', async () => {
   const f = fixture(); const loaded = await f.repo.load(true); const profile = loaded.library.profiles[0]; f.writes.length = 0;
   const path = await f.repo.exportProfile(profile); assert.equal(f.disk.get(path), profile.content); assert.ok(path.startsWith(`${DATA_DIR}/exports/`)); assert.deepEqual(f.writes, [path]);
+});
+
+test('new backup labels and restore dates use English without translating profile names', async () => {
+  const f = fixture(); const { loaded, review } = await f.prepare();
+  const result = await f.repo.apply(loaded, review);
+  const backup = await f.repo.readBackup(result.backup!);
+  assert.equal(backup.label, `Before activating "${review.name}"`);
+  const restore = await f.repo.reviewBackup(backup.id);
+  assert.equal(restore.name, new Date(backup.createdAt).toLocaleString('en-US'));
+  const restored = await f.repo.apply(await f.repo.load(), restore);
+  assert.equal((await f.repo.readBackup(restored.backup!)).label, `Before restoring "${restore.name}"`);
+});
+
+test('existing Chinese names, backup labels and CRLF text survive reads, export and restore', async () => {
+  const content = '# 规则\r\n保持原文。\r\n';
+  const f = fixture(content); let loaded = await f.repo.load(true);
+  loaded = await f.repo.save(loaded, { id: loaded.library.profiles[0].id, name: '现有全局规则', content });
+  const id = '1800000000000-00000000-0000-4000-8000-000000000099';
+  const backup = { version: 1, id, createdAt: 1800000000000, label: '启用“原规则”前', content };
+  const path = `${DATA_DIR}/backups/${id}.json`;
+  f.disk.set(path, JSON.stringify(backup));
+  const rawLibrary = f.disk.get(LIBRARY_PATH); const rawBackup = f.disk.get(path);
+  f.writes.length = 0;
+  const read = await f.repo.load(true);
+  assert.equal(read.library.profiles[0].name, '现有全局规则');
+  assert.deepEqual(await f.repo.readBackup(id), backup);
+  assert.deepEqual(f.writes, []);
+  assert.equal(f.disk.get(LIBRARY_PATH), rawLibrary); assert.equal(f.disk.get(path), rawBackup);
+  assert.equal(f.disk.get(await f.repo.exportProfile(read.library.profiles[0])), content);
+  f.disk.set(GLOBAL_PATH, 'replacement');
+  await f.repo.apply(await f.repo.load(), await f.repo.reviewBackup(id));
+  assert.equal(f.disk.get(GLOBAL_PATH), content);
+  assert.equal(f.disk.get(path), rawBackup);
 });

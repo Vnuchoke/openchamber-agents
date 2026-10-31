@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "description": "OpenChamber 全局规则方案：编辑、差异预览、切换与备份恢复。",
+  "description": "Manage global AGENTS.md profiles in OpenChamber: edit, preview changes, activate, back up and restore.",
   "openchamber": {
     "apiVersion": 1,
     "engines": {
@@ -13,13 +13,13 @@
     "contributes": {
       "panel": {
         "id": "agents-manager",
-        "name": "规则方案",
+        "name": "AGENTS.md Manager",
         "icon": "quill-pen",
         "entry": "panel/index.html"
       },
       "statusSection": {
         "entry": "panel/section.html",
-        "title": "全局规则",
+        "title": "Global Rules",
         "height": 56
       },
       "filesystem": [

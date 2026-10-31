@@ -2,9 +2,9 @@ import { ConflictError, DATA_DIR, GLOBAL_PATH, LIBRARY_PATH, MAX_CONTENT, MAX_PR
 
 const validId = (value: unknown): value is string => typeof value === 'string' && /^[a-zA-Z0-9-]{1,80}$/.test(value);
 export const validateDraft = (name: string, content: string): void => {
-  if (!name.trim() || name.trim().length > 60) throw new Error('方案名称需要 1–60 个字符。');
-  if (content.length > MAX_CONTENT) throw new Error('规则内容不能超过 100,000 个字符。');
-  if (content.includes('\0')) throw new Error('请选择纯文本规则，内容不能包含空字节。');
+  if (!name.trim() || name.trim().length > 60) throw new Error('Profile name must contain 1-60 characters.');
+  if (content.length > MAX_CONTENT) throw new Error('Rules cannot exceed 100,000 characters.');
+  if (content.includes('\0')) throw new Error('Use plain text rules without null bytes.');
 };
 export const parseLibrary = (raw: string): Library => {
   try {
@@ -17,10 +17,10 @@ export const parseLibrary = (raw: string): Library => {
       ids.add(profile.id);
     }
     return data;
-  } catch { throw new Error('方案库格式有误，现有文件未修改。请先修复 library.json 或恢复其备份。'); }
+  } catch { throw new Error('Invalid profile library. The existing file was not changed. Repair library.json or restore its backup first.'); }
 };
 const sameRaw = async (files: Files, expected: string | null): Promise<void> => {
-  if (await files.read(LIBRARY_PATH) !== expected) throw new ConflictError('方案库已被其他窗口修改。请先重新读取，当前草稿会保留。');
+  if (await files.read(LIBRARY_PATH) !== expected) throw new ConflictError('Another window changed the profile library. Refresh first; your current draft will be kept.');
 };
 export const createRepository = (files: Files, now = Date.now, uuid: () => string = () => crypto.randomUUID()) => {
   const readGlobal = async (): Promise<Snapshot> => {
@@ -29,10 +29,10 @@ export const createRepository = (files: Files, now = Date.now, uuid: () => strin
   };
   const writeLibrary = async (library: Library, expected: string | null): Promise<string> => {
     const raw = JSON.stringify(library, null, 2);
-    if (raw.length > 1_500_000) throw new Error('方案库已达到容量上限，请先导出并整理内容。');
+    if (raw.length > 1_500_000) throw new Error('The profile library has reached its size limit. Export and reduce its contents first.');
     await sameRaw(files, expected);
     await files.write(LIBRARY_PATH, raw);
-    if (await files.read(LIBRARY_PATH) !== raw) throw new ConflictError('保存后方案库又发生了变化，请重新读取；不要重复覆盖。');
+    if (await files.read(LIBRARY_PATH) !== raw) throw new ConflictError('The profile library changed again after saving. Refresh; do not overwrite it again.');
     return raw;
   };
   const load = async (initialize = false): Promise<Loaded> => {
@@ -40,9 +40,9 @@ export const createRepository = (files: Files, now = Date.now, uuid: () => strin
     if (raw !== null) return { raw, library: parseLibrary(raw), global };
     const library: Library = { version: 1, profiles: [] };
     if (initialize && global.exists) {
-      validateDraft('现有全局规则', global.content);
+      validateDraft('Existing global rules', global.content);
       const stamp = now();
-      library.profiles.push({ id: uuid(), name: '现有全局规则', content: global.content, archived: false, createdAt: stamp, updatedAt: stamp });
+      library.profiles.push({ id: uuid(), name: 'Existing global rules', content: global.content, archived: false, createdAt: stamp, updatedAt: stamp });
     }
     return { raw: initialize ? await writeLibrary(library, null) : null, library, global };
   };
@@ -50,12 +50,12 @@ export const createRepository = (files: Files, now = Date.now, uuid: () => strin
     validateDraft(draft.name, draft.content);
     const library = structuredClone(loaded.library);
     const existing = draft.id ? library.profiles.find(profile => profile.id === draft.id) : undefined;
-    if (draft.id && !existing) throw new ConflictError('此方案已不在方案库中，请重新读取。');
-    if (existing?.archived) throw new Error('请先恢复已归档方案，再编辑。');
-    if (library.profiles.some(profile => profile.id !== draft.id && profile.name === draft.name.trim())) throw new Error('已有同名方案，请使用不同名称。');
+    if (draft.id && !existing) throw new ConflictError('This profile is no longer in the library. Refresh first.');
+    if (existing?.archived) throw new Error('Unarchive this profile before editing.');
+    if (library.profiles.some(profile => profile.id !== draft.id && profile.name === draft.name.trim())) throw new Error('A profile with the same name already exists. Choose a different name.');
     if (existing) Object.assign(existing, { name: draft.name.trim(), content: draft.content, updatedAt: now() });
     else {
-      if (library.profiles.length >= MAX_PROFILES) throw new Error('最多保存 100 个方案（含归档方案）。');
+      if (library.profiles.length >= MAX_PROFILES) throw new Error('You can save up to 100 profiles, including archived profiles.');
       library.profiles.push({ id: uuid(), name: draft.name.trim(), content: draft.content, createdAt: now(), updatedAt: now(), archived: false });
     }
     const raw = await writeLibrary(library, loaded.raw);
@@ -64,9 +64,9 @@ export const createRepository = (files: Files, now = Date.now, uuid: () => strin
   const archive = async (loaded: Loaded, id: string, archived: boolean): Promise<Loaded> => {
     const library = structuredClone(loaded.library);
     const profile = library.profiles.find(item => item.id === id);
-    if (!profile) throw new ConflictError('此方案不存在，请重新读取。');
+    if (!profile) throw new ConflictError('This profile no longer exists. Refresh first.');
     const global = await readGlobal();
-    if (archived && global.exists && profile.content === global.content) throw new Error('该方案与当前全局文件一致，请先启用其他方案再归档。');
+    if (archived && global.exists && profile.content === global.content) throw new Error('This profile matches the current global file. Activate another profile before archiving it.');
     profile.archived = archived;
     profile.updatedAt = now();
     return { library, raw: await writeLibrary(library, loaded.raw), global };
@@ -74,53 +74,53 @@ export const createRepository = (files: Files, now = Date.now, uuid: () => strin
   const reviewProfile = async (loaded: Loaded, id: string): Promise<Review> => {
     await sameRaw(files, loaded.raw);
     const profile = loaded.library.profiles.find(item => item.id === id && !item.archived);
-    if (!profile) throw new Error('请选择一个未归档的已保存方案。');
+    if (!profile) throw new Error('Select a saved, unarchived profile.');
     return { name: profile.name, content: profile.content, before: await readGlobal(), source: 'profile', profileId: profile.id };
   };
   const apply = async (loaded: Loaded, review: Review): Promise<{ global: Snapshot; backup: string | null }> => {
     if (review.source === 'profile') {
       await sameRaw(files, loaded.raw);
       const profile = loaded.library.profiles.find(item => item.id === review.profileId && !item.archived);
-      if (!profile || profile.content !== review.content) throw new ConflictError('方案已变化，请重新预览。');
+      if (!profile || profile.content !== review.content) throw new ConflictError('The profile changed. Preview it again.');
     }
     let current = await readGlobal();
-    if (!sameSnapshot(current, review.before)) throw new ConflictError('全局文件在预览后已被修改，未写入。请返回并重新预览差异。');
+    if (!sameSnapshot(current, review.before)) throw new ConflictError('The global file changed after preview. Nothing was written. Go back and preview the changes again.');
     if (current.exists && current.content === review.content) return { global: current, backup: null };
     let backup: string | null = null;
     if (current.exists) {
       const stamp = now();
       backup = `${stamp}-${uuid()}`;
-      const item: Backup = { version: 1, id: backup, createdAt: stamp, label: `${review.source === 'backup' ? '恢复' : '启用'}“${review.name}”前`, content: current.content };
+      const item: Backup = { version: 1, id: backup, createdAt: stamp, label: `Before ${review.source === 'backup' ? 'restoring' : 'activating'} "${review.name}"`, content: current.content };
       const path = `${DATA_DIR}/backups/${backup}.json`;
       const raw = JSON.stringify(item, null, 2);
       // Backup failure or a changed file aborts before touching the global rules.
       await files.write(path, raw);
-      if (await files.read(path) !== raw) throw new Error('备份校验失败，全局文件未修改。');
+      if (await files.read(path) !== raw) throw new Error('Backup verification failed. The global file was not changed.');
     }
     if (review.source === 'profile') await sameRaw(files, loaded.raw);
     current = await readGlobal();
-    if (!sameSnapshot(current, review.before)) throw new ConflictError('写入前全局文件发生变化，未写入。请重新预览。');
+    if (!sameSnapshot(current, review.before)) throw new ConflictError('The global file changed before writing. Nothing was written. Preview again.');
     await files.write(GLOBAL_PATH, review.content);
     const result = await readGlobal();
-    if (!result.exists || result.content !== review.content) throw new ConflictError('写入后文件内容与方案不一致，可能有其他编辑器同时写入。请重新读取；切换前的备份仍可查看。');
+    if (!result.exists || result.content !== review.content) throw new ConflictError('File content after writing does not match the profile. Another editor may have written concurrently. Refresh; the backup from before this change is still available.');
     return { global: result, backup };
   };
   const listBackups = async (): Promise<string[]> => (await files.list(`${DATA_DIR}/backups`)).filter(name => /^\d{13}-[a-f0-9-]{36}\.json$/.test(name)).sort().reverse().slice(0, 50).map(name => name.slice(0, -5));
   const readBackup = async (id: string): Promise<Backup> => {
-    if (!/^\d{13}-[a-f0-9-]{36}$/.test(id)) throw new Error('备份编号无效。');
+    if (!/^\d{13}-[a-f0-9-]{36}$/.test(id)) throw new Error('Invalid backup ID.');
     const raw = await files.read(`${DATA_DIR}/backups/${id}.json`);
     try {
       const data = JSON.parse(raw ?? '') as Backup;
       if (data.version !== 1 || data.id !== id || !Number.isFinite(data.createdAt) || typeof data.label !== 'string' || typeof data.content !== 'string') throw new Error();
       return data;
-    } catch { throw new Error('备份缺失或格式有误，未修改全局文件。'); }
+    } catch { throw new Error('The backup is missing or invalid. The global file was not changed.'); }
   };
   const reviewBackup = async (id: string): Promise<Review> => {
     const backup = await readBackup(id);
-    return { source: 'backup', name: new Date(backup.createdAt).toLocaleString('zh-CN'), content: backup.content, before: await readGlobal() };
+    return { source: 'backup', name: new Date(backup.createdAt).toLocaleString('en-US'), content: backup.content, before: await readGlobal() };
   };
   const exportProfile = async (profile: Profile): Promise<string> => {
-    if (!validId(profile.id)) throw new Error('方案编号无效。');
+    if (!validId(profile.id)) throw new Error('Invalid profile ID.');
     const path = `${DATA_DIR}/exports/${profile.id}.md`;
     await files.write(path, profile.content);
     return path;

@@ -5,6 +5,6 @@ export async function openManager(host: SurfaceHost, panel: { id: string; name: 
   try {
     await host.openSurface(`plugin:${panel.id}`);
   } catch {
-    throw new Error(`未能打开「${panel.name}」。请重新加载界面后重试。`);
+    throw new Error(`Could not open ${panel.name}. Reload the interface and try again.`);
   }
 }

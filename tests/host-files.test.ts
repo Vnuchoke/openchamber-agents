@@ -22,25 +22,25 @@ test('global file errors identify the operation and current directory compatibil
   } as unknown as HostClient;
   const files = hostFiles(mock);
   for (const [request, label] of [
-    [() => files.read(GLOBAL_PATH), '读取全局规则失败'],
-    [() => files.read(LIBRARY_PATH), '读取方案库失败'],
-    [() => files.list(`${DATA_DIR}/backups`), '读取备份列表失败'],
+    [() => files.read(GLOBAL_PATH), 'Failed to read global rules'],
+    [() => files.read(LIBRARY_PATH), 'Failed to read profile library'],
+    [() => files.list(`${DATA_DIR}/backups`), 'Failed to read backup list'],
   ] as const) {
     await assert.rejects(request(), error => {
       assert.ok(error instanceof FileOperationError);
       assert.equal(error.code, 'HOST_REJECTED'); assert.equal(error.cause, failure);
       const message = explainError(error);
-      assert.ok(message.includes(label)); assert.match(message, /目录含中文/);
+      assert.ok(message.includes(label)); assert.match(message, /characters outside Latin-1/);
       assert.doesNotMatch(message, /fixture|中文目录|Extension operation failed/);
       return true;
     });
   }
-  await assert.rejects(files.write(GLOBAL_PATH, 'synthetic'), /写入全局规则失败.*勿直接重复写入/);
+  await assert.rejects(files.write(GLOBAL_PATH, 'synthetic'), /Failed to write global rules.*Do not repeat the write/);
   for (const directory of [null, '/fixture/ascii', '/fixture/café']) {
     directoryChanged(directory);
     await assert.rejects(files.read(GLOBAL_PATH), error => {
-      assert.match(explainError(error), /未提供具体原因/);
-      assert.doesNotMatch(explainError(error), /目录含中文/);
+      assert.match(explainError(error), /without a specific reason/);
+      assert.doesNotMatch(explainError(error), /characters outside Latin-1/);
       return true;
     });
   }
@@ -54,13 +54,13 @@ test('failure diagnosis uses the directory observed when the request starts', as
     readFile: async () => { directoryChanged('/fixture/中文目录'); throw Object.assign(new Error('Extension operation failed.'), { code: 'HOST_REJECTED' }); },
   } as unknown as HostClient;
   await assert.rejects(hostFiles(mock).read(GLOBAL_PATH), error => {
-    assert.match(explainError(error), /未提供具体原因/); assert.doesNotMatch(explainError(error), /目录含中文/); return true;
+    assert.match(explainError(error), /without a specific reason/); assert.doesNotMatch(explainError(error), /characters outside Latin-1/); return true;
   });
 });
 
 test('permission and timeout failures remain distinct from host compatibility errors', async () => {
-  for (const [code, expected] of [['NOT_GRANTED', /设置 → 扩展/], ['DENIED', /文件权限不足/], ['HOST_TIMEOUT', /宿主响应超时/], ['BAD_PATH', /授权范围/]] as const) {
+  for (const [code, expected] of [['NOT_GRANTED', /Settings → Extensions/], ['DENIED', /Insufficient file permissions/], ['HOST_TIMEOUT', /host timed out/], ['BAD_PATH', /granted scope/]] as const) {
     const error = new FileOperationError('read', LIBRARY_PATH, { code }, true);
-    assert.match(explainError(error), expected); assert.doesNotMatch(explainError(error), /目录含中文/);
+    assert.match(explainError(error), expected); assert.doesNotMatch(explainError(error), /characters outside Latin-1/);
   }
 });

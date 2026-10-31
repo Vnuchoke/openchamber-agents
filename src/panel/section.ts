@@ -10,27 +10,27 @@ import { openManager } from '../../ui/navigation.ts';
 
 const style = document.createElement('style'); style.textContent = native + layout + components; document.head.append(style);
 const host = connectHost(); const repo = createRepository(hostFiles(host));
-const app = el('section', 'ext ag-section'); const title = el('p', 'ag-status-value', '正在读取…');
+const app = el('section', 'ext ag-section'); const title = el('p', 'ag-status-value', 'Reading…');
 title.setAttribute('role', 'status');
-const row = el('div', 'ag-status-row'); row.append(el('span', 'ag-status-label', '当前方案'), title);
-const note = el('p', 'ext-muted', '全局 AGENTS.md'); const message = el('p', 'ext-notice');
-note.title = '仅表示当前连接服务器的文件状态，不代表已有会话已加载规则。';
+const row = el('div', 'ag-status-row'); row.append(el('span', 'ag-status-label', 'Current profile'), title);
+const note = el('p', 'ext-muted', 'Global AGENTS.md'); const message = el('p', 'ext-notice');
+note.title = 'Shows file state on the connected server, not whether existing sessions have loaded the rules.';
 message.hidden = true; message.setAttribute('role', 'status');
 const footer = el('div', 'ag-status-footer'); const actions = el('div', 'ext-actions');
 footer.append(note, actions); app.append(row, footer, message); document.querySelector('#root')!.append(app);
 let busy = false; let initialized = false;
 const refresh = async () => {
   if (busy) return; busy = true; button.update({ loading: true });
-  try { title.textContent = currentLabel(await repo.load(false)); title.title = title.textContent; note.textContent = `读取于 ${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`; message.hidden = true; }
-  catch (error) { title.textContent = '未读取'; note.textContent = '全局 AGENTS.md'; message.textContent = explainError(error); message.dataset.tone = 'error'; message.hidden = false; }
+  try { title.textContent = currentLabel(await repo.load(false)); title.title = title.textContent; note.textContent = `Read at ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`; message.hidden = true; }
+  catch (error) { title.textContent = 'Not read'; note.textContent = 'Global AGENTS.md'; message.textContent = explainError(error); message.dataset.tone = 'error'; message.hidden = false; }
   finally { busy = false; button.update({ loading: false }); }
 };
-const button = mountButton(actions, { label: '刷新', size: 'sm', variant: 'ghost', onClick: () => { void refresh(); } });
-mountButton(actions, { label: '管理', size: 'sm', variant: 'ghost', onClick: () => {
-  void openManager(host, { id: 'agents-manager', name: '规则方案' }).catch(error => {
+const button = mountButton(actions, { label: 'Refresh', size: 'sm', variant: 'ghost', onClick: () => { void refresh(); } });
+mountButton(actions, { label: 'Manage', size: 'sm', variant: 'ghost', onClick: () => {
+  void openManager(host, { id: 'agents-manager', name: 'AGENTS.md Manager' }).catch(error => {
     message.hidden = false; message.dataset.tone = 'error'; message.textContent = explainError(error);
   });
 } });
-actions.lastElementChild!.setAttribute('aria-label', '管理规则方案');
+actions.lastElementChild!.setAttribute('aria-label', 'Manage rule profiles');
 new ResizeObserver(() => { void host.setHeight(Math.ceil(app.getBoundingClientRect().height)).catch(() => {}); }).observe(app);
 host.onReady(context => { applyHostReady(context, document.documentElement); if (!initialized) { initialized = true; void refresh(); } });
