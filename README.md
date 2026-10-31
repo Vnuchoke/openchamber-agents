@@ -18,7 +18,7 @@ English | [简体中文](#简体中文)
 
 <img src="docs/screenshots/panel.jpg" alt="AGENTS.md Manager panel" width="420">
 
-*Synthetic preview with sample rules. No real global rules are read or changed.*
+*Historical screenshot of the Chinese UI with sample rules. The current UI is English. No real global rules are read or changed in the preview.*
 
 ### Install
 
@@ -30,13 +30,15 @@ https://github.com/chenyuhao0628/openchamber-agents
 
 Requires OpenChamber **2.4.0 or newer**. This extension manages rule text, not OpenCode's agent selector.
 
-> The panel UI is currently Chinese. The full Chinese documentation is below.
+> The extension UI is English, regardless of the host locale. Existing profile names, rules and backups are preserved without translation or migration. Chinese documentation is below; a [Russian guide](README.ru.md) is also available.
 
 ---
 
 ## 简体中文
 
 当前版本 **0.1.6**，核对日期 **2026-10-22**。在 OpenChamber 中管理多个全局 `AGENTS.md` 方案：编辑、差异预览、启用、备份恢复。支持右侧独立面板和工作状态摘要，跟随宿主主题。
+
+界面现为英文：侧栏 **AGENTS.md Manager**，状态分区 **Global Rules**。上述日期及下文实机记录为原版历史检查，不代表本次英文界面已经在实机验证。现有方案名称、规则正文和历史备份不自动翻译或迁移。
 
 > 本仓库只发布扩展框架，不包含任何实际全局规则内容。首次打开会读取本机现有的 `~/.config/opencode/AGENTS.md` 作为方案来源。
 
@@ -71,14 +73,14 @@ https://github.com/chenyuhao0628/openchamber-agents
 
 ## 日常使用
 
-1. 从右侧「规则方案」或工作状态「全局规则 → 管理」进入。两个入口共用同一侧栏编辑器。无项目会话请直接点击右侧「规则方案」图标；原版宿主 2.4.0 的工作状态「管理」入口仍无响应，该限制暂时保留，原因见[已知限制](#已知限制)。首次打开完整面板，将已有全局文本复制为“现有全局规则”；此操作不改写全局文件。仅打开状态摘要不会创建方案库。
-2. **新建、复制、导入**产生草稿。名称及 Markdown 可直接编辑。导入使用 `.md` / `.txt` 文件；内容始终按文本处理，不渲染 HTML、不执行规则。
-3. **保存方案**只更新方案库，支持 `⌘S` / `Ctrl+S`。切换方案、新建或导入遇到未保存内容时，可以保存后继续、放弃修改或继续编辑。切换页签和主题保留草稿；关闭/重载面板后不保证草稿恢复，请先保存。
-4. **预览启用**显示与最新全局文件的逐行差异；确认后备份原文，再次检查文件、原子写入并回读。内容相同时不用写入。空内容会明确提示清空文件。
-5. **方案管理**提供归档/恢复、显示归档和导出。归档可恢复，与实际全局文件内容一致的方案不能归档。导出写到连接服务器的数据目录，并显示路径。
-6. **备份**中选择时间，查看原文，再「预览恢复 → 确认恢复」。恢复前也会备份当前文件。
+1. 从右侧 **AGENTS.md Manager** 或工作状态 **Global Rules → Manage** 进入。两个入口共用同一侧栏编辑器。无项目会话请直接点击右侧图标；原版宿主 2.4.0 的 **Manage** 入口仍无响应，原因见[已知限制](#已知限制)。首次打开完整面板，将已有全局文本复制为 **Existing global rules**；此操作不改写全局文件。仅打开状态摘要不会创建方案库。
+2. **New / Copy / Import** 产生草稿。名称及 Markdown 可直接编辑。导入使用 `.md` / `.txt` 文件；内容始终按文本处理，不渲染 HTML、不执行规则。
+3. **Save profile** 只更新方案库，支持 `⌘S` / `Ctrl+S`。切换方案、新建或导入遇到未保存内容时，可选 **Save and continue / Discard changes / Keep editing**。切换页签和主题保留草稿；关闭/重载面板后不保证草稿恢复，请先保存。
+4. **Preview activation** 显示与最新全局文件的逐行差异；**Confirm activation** 后备份原文，再次检查文件、原子写入并回读。内容相同时不用写入。空内容会明确提示清空文件。
+5. **Profile management** 提供 **Archive / Unarchive / Show archived / Export file**。归档可恢复，与实际全局文件内容一致的方案不能归档。导出写到连接服务器的数据目录，并显示路径。
+6. **Backups** 中选择时间，查看原文，再 **Preview restore → Confirm restore**。恢复前也会备份当前文件。
 
-顶部显示与实际文件内容匹配的方案，或者“未匹配已保存方案”“全局规则为空”等状态。它不是会话已加载规则的证明。项目内规则仍由 OpenCode 按自己的规则加载机制处理；已有会话的重载行为未验证，启用后建议在新会话确认。
+顶部显示与实际文件内容匹配的方案，或者 **No matching saved profile / Global rules are empty** 等状态。它不是会话已加载规则的证明。项目内规则仍由 OpenCode 按自己的规则加载机制处理；已有会话的重载行为未验证，启用后建议在新会话确认。
 
 ## 数据与故障处理
 
@@ -93,7 +95,7 @@ https://github.com/chenyuhao0628/openchamber-agents
 - 每个方案最多 100,000 字符、名称最多 60 字符；最多 100 个方案，包含归档；方案库序列化上限 1,500,000 字符。初次导入超大现有规则会报错并保持原文件。
 - 列表显示宿主列目录结果中最近 50 份备份。备份包含完整原文，受 SDK 单文件 2,000,000 字符上限约束；备份失败会阻止全局写入。原文件不存在时直接创建，SDK 没有删除接口，所以不提供“恢复为文件不存在”。
 - 差异按行计算，超大变更使用整块替换表示，最多展示 400 行；超过部分明确标注，可返回编辑器或备份原文检查。CRLF/LF 差异会单独提示，保存不主动改换行。
-- 权限、格式或读取失败不能当作空库。方案库损坏时保留原文件并报错。外部编辑会使预览失效，需返回重新预览；方案库冲突时「重新读取」保留草稿，再根据新状态决定保存。
+- 权限、格式或读取失败不能当作空库。方案库损坏时保留原文件并报错。外部编辑会使预览失效，需返回重新预览；方案库冲突时 **Refresh** 保留草稿，再根据新状态决定保存。
 - SDK 写入使用临时文件加原子替换，但没有比较并交换或跨窗口锁。读前复核和写后校验能检测常见冲突，**不能保证多编辑器同时写入时绝对不丢失更新**。操作失败或超时后先重新读取实际状态，不盲目重试覆盖。
 - 方案、备份和导出均含完整文本。遵循当前服务器的文件权限；扩展不额外实现加密或 `chmod`。不要把凭据写入规则。
 
@@ -103,15 +105,15 @@ https://github.com/chenyuhao0628/openchamber-agents
 
 2026-10-19 在本机 OpenChamber 2.4.0 复现：当前项目路径含中文等超出 Latin-1 范围的字符时，宿主会把目录原文放入 `x-opencode-directory` 请求头。浏览器的 `Headers.set` 在发送请求前抛出异常，消息桥只返回这句通用英文错误。访问全局文件也会附带该目录，因此同样受影响；错误本身不表示规则文件损坏。此前加载过的标题与内容可能仍留在页面中，不代表本次读取成功。
 
-0.1.5 会指出失败的是全局规则、方案库还是备份，并在这一兼容情形下显示中文原因。重新读取核心文件失败时保留已有内容和草稿，明确标注仍为上次读取结果；写入失败不鼓励盲目重复提交。只记录错误类型与目录字符类别，不输出目录原文或规则内容。
+0.1.5 开始指出失败的是全局规则、方案库还是备份；当时的原因说明为中文，当前说明为英文。重新读取核心文件失败时保留已有内容和草稿，明确标注仍为上次读取结果；写入失败不鼓励盲目重复提交。只记录错误类型与目录字符类别，不输出目录原文或规则内容。
 
-**这是错误诊断与提示改进，宿主的中文目录兼容问题仍存在。** SDK 2.0.3 的文件方法不允许扩展覆盖当前目录或请求头。临时可以在无项目会话中从右侧「规则方案」图标进入，也可在路径不含这类字符的现有项目中使用；无需重命名项目或修改规则文件。无项目时请使用侧栏图标，工作状态「管理」的另一个宿主限制见[已知限制](#已知限制)。
+**这是错误诊断与提示改进，宿主的中文目录兼容问题仍存在。** SDK 2.0.3 的文件方法不允许扩展覆盖当前目录或请求头。临时可以在无项目会话中从右侧 **AGENTS.md Manager** 图标进入，也可在路径不含这类字符的现有项目中使用；无需重命名项目或修改规则文件。无项目时请使用侧栏图标，工作状态 **Manage** 的另一个宿主限制见[已知限制](#已知限制)。
 
 依据：官方 [v2.4.0 文件代理](https://github.com/openchamber/openchamber/blob/v2.4.0/packages/ui/src/lib/guests/files.ts)、[消息桥](https://github.com/openchamber/openchamber/blob/v2.4.0/packages/ui/src/lib/guests/host-bridge.ts) 与本机原始资源的只读核对。用合成路径执行该请求头构造逻辑时，无目录和 ASCII 目录通过，中文目录在网络调用前抛出 `TypeError`。本次未修改已安装宿主；重载及读取前后真实全局文件、方案库和备份的内容校验一致。
 
 ## 已知限制
 
-- 无项目会话中，工作状态「管理」入口可能无响应；请直接点击右侧「规则方案」图标。
+- 无项目会话中，**Global Rules → Manage** 入口可能无响应；请直接点击右侧 **AGENTS.md Manager** 图标。
 - 项目路径含中文等字符时，宿主文件请求可能失败；可改用无项目会话，或路径不含这类字符的项目。
 
 ## 开发与验证
@@ -123,7 +125,7 @@ npm test
 npm run preview
 ```
 
-`npm test` 先构建 `panel/main.js` / `panel/section.js`，再运行 Node 测试。`npm run share` 先构建面板脚本，再按宿主 zip 安装限制生成可分发的 `dist/openchamber-agents-<版本>.zip`，并在读回归档复核成员、CRC 与内容后输出校验值。预览脚本只在 `127.0.0.1` 服务本扩展构建产物，所有文件接口通过浏览器内存中的合成数据模拟，**不读取真实全局文件**。终端输出随机端口；可用 `PREVIEW_PORT` 指定端口。支持主题、400/280px 宽度、外部修改、备份失败、权限不足和状态分区切换；URL 的 `state=empty|denied|corrupt` 可检查异常初始状态；`directory=unicode` 或「模拟中文目录」可复现文件请求头错误；`surface=status&directory=none` 复现原版宿主无项目时的导航缺陷；预览只模拟原版行为，不能用它声称实机已修复。
+`npm test` 先构建 `panel/main.js` / `panel/section.js`，再运行 Node 测试。`npm run share` 先构建面板脚本，再按宿主 zip 安装限制生成可分发的 `dist/openchamber-agents-<版本>.zip`，并在读回归档复核成员、CRC 与内容后输出校验值。预览脚本只在 `127.0.0.1` 服务本扩展构建产物，所有文件接口通过浏览器内存中的合成数据模拟，**不读取真实全局文件**。终端输出随机端口；可用 `PREVIEW_PORT` 指定端口。支持主题、400/280px 宽度、外部修改、备份失败、权限不足和状态分区切换；URL 的 `state=empty|denied|corrupt` 可检查异常初始状态；`directory=unicode` 或 **Simulate Unicode directory** 可复现文件请求头错误；`surface=status&directory=none` 复现原版宿主无项目时的导航缺陷；预览只模拟原版行为，不能用它声称实机已修复。
 
 | 目录 | 职责 |
 | --- | --- |
