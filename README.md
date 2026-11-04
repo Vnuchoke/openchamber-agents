@@ -14,6 +14,7 @@ English | [简体中文](#简体中文)
 - No background service, model calls, session sending or network requests.
 - Only touches `~/.config/opencode/AGENTS.md` and `~/.config/openchamber/agents-manager/**`.
 
+- Panel and Work Status copy follow the host language (Simplified Chinese or English).
 ### Screenshot
 
 <img src="docs/screenshots/panel.jpg" alt="AGENTS.md Manager panel" width="420">
@@ -30,13 +31,13 @@ https://github.com/chenyuhao0628/openchamber-agents
 
 Requires OpenChamber **2.4.0 or newer**. This extension manages rule text, not OpenCode's agent selector.
 
-> The panel UI is currently Chinese. The full Chinese documentation is below.
+> The panel and Work Status copy follow the host language (Simplified Chinese or English). The full Chinese documentation is below.
 
 ---
 
 ## 简体中文
 
-当前版本 **0.1.6**，核对日期 **2026-10-22**。在 OpenChamber 中管理多个全局 `AGENTS.md` 方案：编辑、差异预览、启用、备份恢复。支持右侧独立面板和工作状态摘要，跟随宿主主题。
+当前版本 **0.1.7**，核对日期 **2026-11-04**。面板文案跟随宿主语言在简体中文和英文间切换。在 OpenChamber 中管理多个全局 `AGENTS.md` 方案：编辑、差异预览、启用、备份恢复。支持右侧独立面板和工作状态摘要，跟随宿主主题。
 
 > 本仓库只发布扩展框架，不包含任何实际全局规则内容。首次打开会读取本机现有的 `~/.config/opencode/AGENTS.md` 作为方案来源。
 
