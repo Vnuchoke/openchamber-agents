@@ -1,4 +1,6 @@
 import { mountButton, mountSelect, mountTabs, mountTextField, type ButtonHandle, type ButtonVariant } from '@openchamber/sdk/ui';
+import type { I18n } from '../shared/i18n.ts';
+import { t as english } from './i18n.ts';
 import { diffLines } from '../core/diff.ts';
 import { GLOBAL_PATH, matchedProfile, type Backup, type Loaded, type Review } from '../core/types.ts';
 
@@ -14,58 +16,62 @@ export const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className = ''
   if (text !== undefined) node.textContent = text;
   return node;
 };
-export const currentLabel = (loaded: Loaded): string => matchedProfile(loaded)?.name ?? (loaded.global.exists ? (loaded.global.content ? 'No matching saved profile' : 'Global rules are empty') : 'No global rules file');
+export const currentLabel = (loaded: Loaded, t: (source: string) => string = english): string => matchedProfile(loaded)?.name ?? (loaded.global.exists ? (loaded.global.content ? t('未匹配已保存方案') : t('全局规则为空')) : t('尚无全局规则文件'));
 
-export const mountView = (root: HTMLElement, callbacks: {
+export const mountView = (root: HTMLElement, i18n: I18n, callbacks: {
   action: (action: Action) => void; change: (field: 'name' | 'content', value: string) => void;
   select: (id: string) => void; tab: (id: string) => void; backup: (id: string) => void; file: (file: File) => void;
 }) => {
+  const { t, locale } = i18n;
   const app = el('main', 'ext ag');
   const header = el('header', 'ag-header'); const heading = el('div', 'ag-heading');
-  const status = el('div'); const title = el('h1', 'ag-title', 'Connecting to OpenChamber…');
-  status.append(el('p', 'ext-muted', 'Current global file'), title);
-  status.firstElementChild!.classList.add('ag-scope');
+  const status = el('div'); const title = el('h1', 'ag-title', t('正在连接 OpenChamber…'));
+  const scope = el('p', 'ext-muted ag-scope', t('当前全局文件'));
+  status.append(scope, title);
   const refreshSlot = el('div'); heading.append(status, refreshSlot);
   const tabsSlot = el('div', 'ag-tabs');
-  header.append(heading, el('p', 'ext-muted ag-scope', 'Connected OpenCode · Global'), tabsSlot);
+  const headerScope = el('p', 'ext-muted ag-scope', t('当前连接的 OpenCode · 全局'));
+  header.append(heading, headerScope, tabsSlot);
   const scroll = el('div', 'ag-scroll'); const message = el('p', 'ext-notice ag-message');
   message.setAttribute('role', 'status'); message.setAttribute('aria-live', 'polite');
-  const guard = el('div', 'ag-guard ag-message'); guard.setAttribute('role', 'group'); guard.setAttribute('aria-label', 'Unsaved draft actions');
-  guard.append(el('p', '', 'You have unsaved changes. How would you like to continue?'));
+  const guard = el('div', 'ag-guard ag-message'); guard.setAttribute('role', 'group'); guard.setAttribute('aria-label', t('处理未保存草稿'));
+  const guardText = el('p', '', t('有未保存的修改，如何继续？'));
+  guard.append(guardText);
   const guardActions = el('div', 'ext-actions'); guard.append(guardActions);
-  const profiles = el('section', 'ag-stack'); profiles.setAttribute('aria-label', 'Rule profile editor');
+  const profiles = el('section', 'ag-stack'); profiles.setAttribute('aria-label', t('规则方案编辑'));
   const selectSlot = el('div'); const tools = el('div', 'ext-actions');
   const nameSlot = el('div', 'ag-field'); const editorSlot = el('div', 'ag-field ag-editor');
-  const more = el('details', 'ag-details'); more.append(el('summary', '', 'Profile management'));
+  const more = el('details', 'ag-details'); const moreSummary = el('summary', '', t('方案管理')); more.append(moreSummary);
   const moreActions = el('div', 'ext-actions'); more.append(moreActions);
   const foot = el('footer', 'ag-footer'); const saveNote = el('p', 'ext-muted'); const saveActions = el('div', 'ext-actions'); foot.append(saveNote, saveActions);
   profiles.append(selectSlot, tools, nameSlot, editorSlot, more, foot);
-  const backups = el('section', 'ag-stack'); backups.setAttribute('aria-label', 'Global rules backups');
-  const backupSelectSlot = el('div'); const backupNote = el('p', 'ext-muted'); const backupText = el('pre', 'ag-preview'); backupText.tabIndex = 0; backupText.setAttribute('aria-label', 'Backup content');
+  const backups = el('section', 'ag-stack'); backups.setAttribute('aria-label', t('全局规则备份'));
+  const backupSelectSlot = el('div'); const backupNote = el('p', 'ext-muted'); const backupText = el('pre', 'ag-preview'); backupText.tabIndex = 0; backupText.setAttribute('aria-label', t('备份内容'));
   const backupActions = el('div', 'ext-actions'); backups.append(backupNote, backupSelectSlot, backupText, backupActions);
-  const review = el('section', 'ag-stack'); review.setAttribute('aria-label', 'Activation changes preview');
+  const review = el('section', 'ag-stack'); review.setAttribute('aria-label', t('启用差异预览'));
   const reviewTitle = el('h2', 'ag-review-title'); reviewTitle.tabIndex = -1;
   const reviewNote = el('p', 'ext-notice'); const summary = el('p', 'ext-muted');
-  const diff = el('div', 'ag-diff'); diff.tabIndex = 0; diff.setAttribute('aria-label', 'Rule changes: old line numbers on the left, new line numbers on the right');
+  const diff = el('div', 'ag-diff'); diff.tabIndex = 0; diff.setAttribute('aria-label', t('规则差异，左侧为原行号，右侧为新行号'));
   const reviewActions = el('div', 'ext-actions');
-  review.append(reviewTitle, reviewNote, summary, diff, el('p', 'ext-muted', 'The current file is backed up before writing. OpenCode controls whether existing sessions reload rules. Confirm rule loading in a new session.'), reviewActions);
+  const reviewHint = el('p', 'ext-muted', t('写入前备份当前文件。已有会话是否重新加载规则由 OpenCode 决定，建议在新会话确认。'));
+  review.append(reviewTitle, reviewNote, summary, diff, reviewHint, reviewActions);
   const path = el('p', 'ext-muted ag-path', GLOBAL_PATH);
   scroll.append(message, guard, profiles, backups, review, path); app.append(header, scroll); root.append(app);
   const buttons = new Map<Action, ButtonHandle>();
   const button = (slot: HTMLElement, action: Action, label: string, variant: ButtonVariant = 'ghost') => {
-    const handle = mountButton(slot, { label, size: 'sm', variant, onClick: () => callbacks.action(action) }); buttons.set(action, handle);
+    const handle = mountButton(slot, { label: t(label), size: 'sm', variant, onClick: () => callbacks.action(action) }); buttons.set(action, handle);
   };
-  button(refreshSlot, 'refresh', 'Refresh'); button(tools, 'new', 'New'); button(tools, 'copy', 'Copy'); button(tools, 'import', 'Import');
-  button(moreActions, 'export', 'Export file'); button(moreActions, 'archive', 'Archive'); button(moreActions, 'archives', 'Show archived');
-  button(saveActions, 'save', 'Save profile', 'outline'); button(saveActions, 'preview', 'Preview activation', 'default');
-  button(guardActions, 'guardSave', 'Save and continue', 'outline'); button(guardActions, 'guardDiscard', 'Discard changes'); button(guardActions, 'guardCancel', 'Keep editing');
-  button(reviewActions, 'back', 'Back to editor', 'outline'); button(reviewActions, 'apply', 'Confirm activation', 'default');
-  button(backupActions, 'restore', 'Preview restore', 'outline');
-  const tabs = mountTabs(tabsSlot, { items: [{ id: 'profiles', label: 'Profiles' }, { id: 'backups', label: 'Backups' }], activeId: 'profiles', onChange: callbacks.tab });
-  const select = mountSelect(selectSlot, { label: 'Rule profile', value: null, options: [], searchable: true, searchPlaceholder: 'Search profiles…', placeholder: 'New profile', onChange: callbacks.select });
-  const name = mountTextField(nameSlot, { label: 'Profile name', value: '', placeholder: 'For example: Daily development', onChange: value => callbacks.change('name', value) });
-  const editor = mountTextField(editorSlot, { label: 'Rules · Markdown', value: '', mono: true, multiline: true, rows: 12, placeholder: '# Development conventions\n\nWrite your global working rules here…', onChange: value => callbacks.change('content', value) });
-  const backupSelect = mountSelect(backupSelectSlot, { label: 'Backup time', value: null, options: [], searchable: true, searchPlaceholder: 'Search times…', placeholder: 'Select a backup', onChange: callbacks.backup });
+  button(refreshSlot, 'refresh', '重新读取'); button(tools, 'new', '新建'); button(tools, 'copy', '复制'); button(tools, 'import', '导入');
+  button(moreActions, 'export', '导出文件'); button(moreActions, 'archive', '归档'); button(moreActions, 'archives', '显示归档');
+  button(saveActions, 'save', '保存方案', 'outline'); button(saveActions, 'preview', '预览启用', 'default');
+  button(guardActions, 'guardSave', '保存后继续', 'outline'); button(guardActions, 'guardDiscard', '放弃修改'); button(guardActions, 'guardCancel', '继续编辑');
+  button(reviewActions, 'back', '返回编辑', 'outline'); button(reviewActions, 'apply', '确认启用', 'default');
+  button(backupActions, 'restore', '预览恢复', 'outline');
+  const tabs = mountTabs(tabsSlot, { items: [{ id: 'profiles', label: t('方案') }, { id: 'backups', label: t('备份') }], activeId: 'profiles', onChange: callbacks.tab });
+  const select = mountSelect(selectSlot, { label: t('规则方案选择'), value: null, options: [], searchable: true, searchPlaceholder: t('搜索方案…'), placeholder: t('新建方案'), onChange: callbacks.select });
+  const name = mountTextField(nameSlot, { label: t('方案名称'), value: '', placeholder: t('例如：日常开发'), onChange: value => callbacks.change('name', value) });
+  const editor = mountTextField(editorSlot, { label: t('规则内容 · Markdown'), value: '', mono: true, multiline: true, rows: 12, placeholder: t('# 开发约定\n\n在这里填写全局工作规则…'), onChange: value => callbacks.change('content', value) });
+  const backupSelect = mountSelect(backupSelectSlot, { label: t('备份时间'), value: null, options: [], searchable: true, searchPlaceholder: t('搜索时间…'), placeholder: t('选择备份'), onChange: callbacks.backup });
   const input = el('input'); input.type = 'file'; input.accept = '.md,.txt,text/plain,text/markdown'; input.hidden = true; app.append(input);
   input.addEventListener('change', () => { if (input.files?.[0]) callbacks.file(input.files[0]); input.value = ''; });
   // Associate kit notes explicitly; the kit's wrapping label provides the visible label.
@@ -78,30 +84,66 @@ export const mountView = (root: HTMLElement, callbacks: {
   let lastTab = 'profiles'; let lastReview: Review | null = null; let lastMessage = ''; let lastPending = false;
   const paintReview = (item: Review) => {
     const result = diffLines(item.before.content, item.content); diff.replaceChildren();
-    reviewTitle.textContent = `${item.source === 'backup' ? 'Restore backup' : 'Activate profile'}: ${item.name}`;
-    reviewNote.textContent = item.content === '' ? 'This will clear the contents of the global AGENTS.md.' : 'This will replace the connected OpenCode global AGENTS.md, affecting projects that share this file.';
+    reviewTitle.textContent = t('{action}：{name}', { action: item.source === 'backup' ? t('恢复备份') : t('启用方案'), name: item.name });
+    reviewNote.textContent = item.content === '' ? t('此操作将清空全局 AGENTS.md 的内容。') : t('此操作将替换当前连接的 OpenCode 全局 AGENTS.md，影响共享此文件的项目。');
     reviewNote.dataset.tone = item.content === '' ? 'warning' : 'info';
-    summary.textContent = `Lines added: ${result.added} · Lines removed: ${result.removed}${result.coarse ? ' · Large changes shown as blocks' : ''}${item.before.content !== item.content && !result.added && !result.removed ? ' · Line endings only' : ''}${!item.before.exists ? ' · File will be created' : ''}`;
-    if (item.before.exists && item.before.content === item.content) summary.textContent += ' · Identical content; no write needed';
+    summary.textContent = t('新增 {added} 行 · 删除 {removed} 行', { added: result.added, removed: result.removed })
+      + (result.coarse ? t(' · 大段变更按整块展示') : '')
+      + (item.before.content !== item.content && !result.added && !result.removed ? t(' · 仅换行格式变化') : '')
+      + (!item.before.exists ? t(' · 将创建文件') : '');
+    if (item.before.exists && item.before.content === item.content) summary.textContent += t(' · 内容一致，无需写入');
     let shown = 0, skipped = 0;
-    const gap = () => { if (skipped) { diff.append(el('p', 'ag-diff-gap', `${skipped} unchanged lines omitted`)); skipped = 0; } };
+    const gap = () => { if (skipped) { diff.append(el('p', 'ag-diff-gap', t('省略 {count} 行未变更内容', { count: skipped }))); skipped = 0; } };
     for (let i = 0; i < result.lines.length; i++) {
       const line = result.lines[i];
       if (line.kind === 'same' && i > 2 && i < result.lines.length - 3 && result.lines.slice(Math.max(0, i - 3), i + 4).every(row => row.kind === 'same')) { skipped++; continue; }
-      if (shown >= 400) { gap(); diff.append(el('p', 'ag-diff-gap', 'Preview limited to 400 lines. Further changes are not shown. Return to the editor or backup content to check the full text.')); break; }
+      if (shown >= 400) { gap(); diff.append(el('p', 'ag-diff-gap', t('预览达到 400 行，后续差异未展示。请返回编辑器或备份内容检查完整文本。'))); break; }
       gap(); shown++;
       const row = el('div', 'ag-diff-line'); row.dataset.kind = line.kind;
       row.append(el('span', '', String(line.oldLine ?? '')), el('span', '', String(line.newLine ?? '')), el('span', '', line.kind === 'add' ? '+' : line.kind === 'remove' ? '−' : ' '), el('code', '', line.text)); diff.append(row);
     }
-    gap(); if (!result.lines.length) diff.append(el('p', 'ag-diff-gap', 'File content is empty'));
+    gap(); if (!result.lines.length) diff.append(el('p', 'ag-diff-gap', t('文件内容为空')));
+  };
+  const localize = () => {
+    scope.textContent = t('当前全局文件');
+    headerScope.textContent = t('当前连接的 OpenCode · 全局');
+    guard.setAttribute('aria-label', t('处理未保存草稿'));
+    guardText.textContent = t('有未保存的修改，如何继续？');
+    profiles.setAttribute('aria-label', t('规则方案编辑'));
+    moreSummary.textContent = t('方案管理');
+    backups.setAttribute('aria-label', t('全局规则备份'));
+    backupText.setAttribute('aria-label', t('备份内容'));
+    review.setAttribute('aria-label', t('启用差异预览'));
+    diff.setAttribute('aria-label', t('规则差异，左侧为原行号，右侧为新行号'));
+    reviewHint.textContent = t('写入前备份当前文件。已有会话是否重新加载规则由 OpenCode 决定，建议在新会话确认。');
+    buttons.get('refresh')!.update({ label: t('重新读取') });
+    buttons.get('new')!.update({ label: t('新建') });
+    buttons.get('copy')!.update({ label: t('复制') });
+    buttons.get('import')!.update({ label: t('导入') });
+    buttons.get('export')!.update({ label: t('导出文件') });
+    buttons.get('save')!.update({ label: t('保存方案') });
+    buttons.get('preview')!.update({ label: t('预览启用') });
+    buttons.get('guardSave')!.update({ label: t('保存后继续') });
+    buttons.get('guardDiscard')!.update({ label: t('放弃修改') });
+    buttons.get('guardCancel')!.update({ label: t('继续编辑') });
+    buttons.get('restore')!.update({ label: t('预览恢复') });
+    tabs.update({ items: [{ id: 'profiles', label: t('方案') }, { id: 'backups', label: t('备份') }] });
+    select.update({ label: t('规则方案选择'), searchPlaceholder: t('搜索方案…'), placeholder: t('新建方案') });
+    name.update({ label: t('方案名称'), placeholder: t('例如：日常开发') });
+    editor.update({ label: t('规则内容 · Markdown'), placeholder: t('# 开发约定\n\n在这里填写全局工作规则…') });
+    backupSelect.update({ label: t('备份时间'), searchPlaceholder: t('搜索时间…'), placeholder: t('选择备份') });
+    lastReview = null;
+    lastMessage = '';
+    lastTab = '';
   };
   return {
     pickFile: () => input.click(),
     focusName: () => nameSlot.querySelector('input')!.focus(),
+    localize,
     render(state: State) {
       const loaded = state.loaded; const selected = loaded?.library.profiles.find(item => item.id === state.draft.id);
       const archived = Boolean(selected?.archived); const blocked = state.busy || !loaded || state.pending;
-      title.textContent = loaded ? currentLabel(loaded) : state.busy ? 'Reading rules…' : 'Rules not loaded';
+      title.textContent = loaded ? currentLabel(loaded, t) : state.busy ? t('正在读取规则…') : t('规则尚未读取');
       message.hidden = !state.message; message.textContent = state.message; message.dataset.tone = state.tone;
       guard.hidden = !state.pending;
       if ((state.message !== lastMessage && state.tone === 'error') || (state.pending && !lastPending)) scroll.scrollTop = 0;
@@ -111,10 +153,11 @@ export const mountView = (root: HTMLElement, callbacks: {
       review.hidden = !state.review;
       tabsSlot.hidden = Boolean(state.review);
       if (state.tab !== lastTab) { tabs.update({ activeId: state.tab }); lastTab = state.tab; }
-      select.update({ value: state.draft.id ?? null, disabled: blocked, options: (loaded?.library.profiles ?? []).filter(item => state.showArchived || !item.archived).map(item => ({ id: item.id, label: item.name, hint: item.archived ? 'Archived' : loaded?.global.exists && item.content === loaded.global.content ? 'Matches global file' : undefined })) });
+      select.update({ value: state.draft.id ?? null, disabled: blocked, options: (loaded?.library.profiles ?? []).filter(item => state.showArchived || !item.archived).map(item => ({ id: item.id, label: item.name, hint: item.archived ? t('已归档') : loaded?.global.exists && item.content === loaded.global.content ? t('与全局一致') : undefined })) });
       name.update({ value: state.draft.name, disabled: blocked || archived });
-      editor.update({ value: state.draft.content, disabled: blocked || archived, helper: `Characters: ${state.draft.content.length.toLocaleString('en-US')} · Lines: ${state.draft.content ? state.draft.content.split('\n').length : 0}${state.dirty || !selected ? ' · Unsaved' : archived ? ' · Archived, read-only' : ' · Saved'}` });
-      saveNote.textContent = state.dirty ? 'Saving only updates the library. Save to preview activation.' : archived ? 'Unarchive to edit and activate this profile.' : selected ? 'Selecting a profile does not change global rules.' : 'Write or import rules to save your first profile.';
+      const lines = state.draft.content ? state.draft.content.split('\n').length : 0;
+      editor.update({ value: state.draft.content, disabled: blocked || archived, helper: `${t('{count} 字符 · {lines} 行', { count: state.draft.content.length.toLocaleString(locale), lines })}${state.dirty || !selected ? t(' · 未保存') : archived ? t(' · 已归档，只读') : t(' · 已保存')}` });
+      saveNote.textContent = state.dirty ? t('保存仅更新方案库；保存后可预览启用。') : archived ? t('恢复归档后可继续编辑和启用。') : selected ? t('选中方案不会改变全局规则。') : t('填写或导入规则，保存你的第一个方案。');
       for (const handle of buttons.values()) handle.update({ disabled: blocked });
       buttons.get('refresh')!.update({ disabled: state.busy || state.pending, loading: state.busy && !loaded });
       for (const action of ['guardSave', 'guardDiscard', 'guardCancel'] as const) buttons.get(action)!.update({ disabled: state.busy });
@@ -122,16 +165,16 @@ export const mountView = (root: HTMLElement, callbacks: {
       buttons.get('preview')!.update({ disabled: blocked || archived || !selected || state.dirty });
       buttons.get('copy')!.update({ disabled: blocked || !state.draft.name });
       buttons.get('export')!.update({ disabled: blocked || !selected || state.dirty });
-      buttons.get('archive')!.update({ label: archived ? 'Unarchive' : 'Archive', disabled: blocked || !selected || state.dirty });
-      buttons.get('archives')!.update({ label: state.showArchived ? 'Hide archived' : 'Show archived' });
-      backupSelect.update({ value: state.backup?.id ?? null, disabled: blocked, options: state.backups.map(id => ({ id, label: new Date(Number(id.split('-')[0])).toLocaleString('en-US'), hint: id.slice(-4) })) });
-      backupNote.textContent = state.backups.length ? `Showing the latest ${state.backups.length} backups. The current file is also backed up before restoring.` : 'No backups yet. One is created when an existing global file is first replaced.';
+      buttons.get('archive')!.update({ label: archived ? t('恢复归档') : t('归档'), disabled: blocked || !selected || state.dirty });
+      buttons.get('archives')!.update({ label: state.showArchived ? t('隐藏归档') : t('显示归档') });
+      backupSelect.update({ value: state.backup?.id ?? null, disabled: blocked, options: state.backups.map(id => ({ id, label: new Date(Number(id.split('-')[0])).toLocaleString(locale), hint: id.slice(-4) })) });
+      backupNote.textContent = state.backups.length ? t('显示最近 {count} 份备份；恢复前也会备份当前文件。', { count: state.backups.length }) : t('暂无备份。首次替换已有全局文件时会自动创建。');
       backupText.hidden = !state.backup;
       backupText.textContent = state.backup?.content ?? '';
-      backupText.setAttribute('aria-label', state.backup?.label ?? 'Backup content');
+      backupText.setAttribute('aria-label', state.backup?.label ?? t('备份内容'));
       buttons.get('restore')!.update({ disabled: blocked || !state.backup });
-      buttons.get('back')!.update({ label: state.review?.source === 'backup' ? 'Back to backups' : 'Back to editor', disabled: state.busy });
-      buttons.get('apply')!.update({ label: state.review?.source === 'backup' ? 'Confirm restore' : 'Confirm activation', disabled: state.busy || state.reviewInvalid || !state.review || (state.review.before.exists && state.review.before.content === state.review.content), loading: state.busy && Boolean(state.review) });
+      buttons.get('back')!.update({ label: state.review?.source === 'backup' ? t('返回备份') : t('返回编辑'), disabled: state.busy });
+      buttons.get('apply')!.update({ label: state.review?.source === 'backup' ? t('确认恢复') : t('确认启用'), disabled: state.busy || state.reviewInvalid || !state.review || (state.review.before.exists && state.review.before.content === state.review.content), loading: state.busy && Boolean(state.review) });
       if (state.review !== lastReview) { lastReview = state.review; if (state.review) { paintReview(state.review); scroll.scrollTop = 0; reviewTitle.focus(); } }
     },
   };
