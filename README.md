@@ -35,13 +35,13 @@ Git installation gets the English UI once it is merged into the fork's default b
 
 Requires OpenChamber **2.4.0 or newer**; **2.7.0** is recommended for projects with non-Latin-1 folder names. This extension manages rule text, not OpenCode's agent selector.
 
-> The extension UI is English, regardless of the host locale. Existing profile names, rules and backups are preserved without translation or migration. Chinese documentation is below; a [Russian guide](README.ru.md) is also available.
+> The extension UI is English, regardless of the host locale. Existing profile names, rules and backups are preserved without translation or migration. Chinese documentation is below; a [Russian guide](https://github.com/Vnuchoke/openchamber-agents/blob/HEAD/README.ru.md) is also available.
 
 ---
 
 ## 简体中文
 
-当前版本 **0.2.2**，上游核对日期 **2026-11-16**。在 OpenChamber 中管理多个全局 `AGENTS.md` 方案：编辑、Token 预算估算、Markdown 大纲快速跳转、未匹配实际全局规则时的纳管与只读对比、差异预览、启用、备份恢复。支持右侧独立面板和工作状态摘要，跟随宿主主题。
+当前版本 **0.2.3**，上游核对日期 **2026-11-16**。在 OpenChamber 中管理多个全局 `AGENTS.md` 方案：编辑、Token 预算估算、Markdown 大纲快速跳转、未匹配实际全局规则时的纳管与只读对比、差异预览、启用、备份恢复。支持右侧独立面板和工作状态摘要，跟随宿主主题。
 
 界面现为英文：侧栏 **AGENTS.md Manager**，状态分区 **Global Rules**。上述日期及下文实机记录为原版历史检查，不代表本次英文界面已经在实机验证。现有方案名称、规则正文和历史备份不自动翻译或迁移。
 
