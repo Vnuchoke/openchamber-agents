@@ -9,6 +9,7 @@ import { installScrollbarActivity } from '../../ui/scrollbar.ts';
 import layout from './styles/layout.css';
 import components from './styles/components.css';
 import { applyDocumentLanguage, i18n } from './i18n.ts';
+import { truncateName, uniqueDraftName } from './draft-name.ts';
 
 const { t } = i18n;
 const style = document.createElement('style');
@@ -78,19 +79,9 @@ const copyText = async (value: string, okMessage: string) => {
   render();
 };
 
-const truncateName = (name: string, limit: number): string => name.slice(0, limit).replace(/[\uD800-\uDBFF]$/, '');
-
-const uniqueDraftName = (base: string): string => {
-  const existing = new Set((state.loaded?.library.profiles ?? []).map(item => item.name));
-  const trimmed = truncateName(base.trim(), 60) || t('新方案');
-  if (!existing.has(trimmed)) return trimmed;
-  for (let index = 2; index <= 99; index += 1) {
-    const suffix = ` ${index}`;
-    const candidate = `${truncateName(trimmed, 60 - suffix.length)}${suffix}`;
-    if (!existing.has(candidate)) return candidate;
-  }
-  return trimmed;
-};
+const draftName = (base: string): string => uniqueDraftName(
+  base, (state.loaded?.library.profiles ?? []).map(item => item.name), t('新方案'),
+);
 
 const useDraft = (draft: Draft, isNew = false) => {
   state.draft = { ...draft };
@@ -171,12 +162,12 @@ const select = (id: string) => guard(() => {
 
 const actions: Record<Action, () => void> = {
   refresh: () => { void run(refresh); },
-  new: () => guard(() => { useDraft({ name: uniqueDraftName(t('新方案')), content: '' }, true); view.focusName(); }),
-  copy: () => guard(() => { useDraft({ name: uniqueDraftName(`${truncateName(state.draft.name, 52)}${t(' 副本')}`), content: state.draft.content }, true); view.focusName(); }),
+  new: () => guard(() => { useDraft({ name: draftName(t('新方案')), content: '' }, true); view.focusName(); }),
+  copy: () => guard(() => { useDraft({ name: draftName(`${truncateName(state.draft.name, 52)}${t(' 副本')}`), content: state.draft.content }, true); view.focusName(); }),
   import: () => guard(() => view.pickFile()),
   importGlobal: () => guard(() => {
     if (!state.loaded || !state.loaded.global.exists) return;
-    useDraft({ name: uniqueDraftName(t('现有全局规则')), content: state.loaded.global.content }, true);
+    useDraft({ name: draftName(t('现有全局规则')), content: state.loaded.global.content }, true);
     notice(t('当前已将全局 AGENTS.md 读取为新草稿，保存后可纳入方案库。'), 'info');
     render();
     view.focusName();
@@ -328,7 +319,7 @@ const view = mountView(document.querySelector<HTMLElement>('#root')!, i18n, {
     void run(async () => {
       if (file.size > MAX_CONTENT * 4) throw new Error(t('导入文件过大，请使用不超过 100,000 字符的规则文件。'));
       const content = await file.text();
-      const name = uniqueDraftName(file.name.replace(/\.(md|txt)$/i, '').trim() || t('导入方案'));
+      const name = draftName(file.name.replace(/\.(md|txt)$/i, '').trim() || t('导入方案'));
       validateDraft(name, content);
       useDraft({ name, content }, true);
       notice(t('已导入为草稿，保存后可预览启用。'));

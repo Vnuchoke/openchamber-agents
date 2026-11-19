@@ -28,8 +28,10 @@ English | [简体中文](#简体中文)
 In OpenChamber, open **Settings → Extensions → Add extension** and paste:
 
 ```text
-https://github.com/chenyuhao0628/openchamber-agents
+https://github.com/Vnuchoke/openchamber-agents
 ```
+
+Git installation gets the English UI once it is merged into the fork's default branch. Until then, use a local folder or ZIP from the English build. [Upstream project](https://github.com/chenyuhao0628/openchamber-agents).
 
 Requires OpenChamber **2.4.0 or newer**; **2.7.0** is recommended for projects with non-Latin-1 folder names. This extension manages rule text, not OpenCode's agent selector.
 
@@ -58,10 +60,12 @@ Requires OpenChamber **2.4.0 or newer**; **2.7.0** is recommended for projects w
 在 OpenChamber **设置 → 扩展 → 添加扩展** 中粘贴：
 
 ```text
-https://github.com/chenyuhao0628/openchamber-agents
+https://github.com/Vnuchoke/openchamber-agents
 ```
 
 设置页会按仓库根 `package.json` 的 `version` 检查更新。有新版本时，卡片会显示「更新」。只有 Git URL 安装会自动更新；文件夹和 zip 安装需要手动替换。
+
+英文界面合入 fork 的默认分支后可通过 Git URL 安装；合入前请使用包含英文构建的本地文件夹或 ZIP。
 
 ### 从文件夹安装（开发）
 
