@@ -9,6 +9,7 @@ import { installScrollbarActivity } from '../../ui/scrollbar.ts';
 import layout from './styles/layout.css';
 import components from './styles/components.css';
 import { applyDocumentLanguage, i18n } from './i18n.ts';
+import { truncateName, uniqueDraftName } from './draft-name.ts';
 
 const { t } = i18n;
 const style = document.createElement('style');
@@ -17,7 +18,7 @@ document.head.append(style);
 installScrollbarActivity(document);
 
 const host = connectHost({ requestTimeoutMs: 20_000 });
-const repo = createRepository(hostFiles(host, t), Date.now, () => crypto.randomUUID(), t);
+const repo = createRepository(hostFiles(host));
 const state: State = {
   loaded: null,
   draft: { name: '', content: '' },
@@ -78,16 +79,9 @@ const copyText = async (value: string, okMessage: string) => {
   render();
 };
 
-const uniqueDraftName = (base: string): string => {
-  const existing = new Set((state.loaded?.library.profiles ?? []).map(item => item.name));
-  const trimmed = base.trim().slice(0, 56) || t('新方案');
-  if (!existing.has(trimmed)) return trimmed;
-  for (let index = 2; index <= 99; index += 1) {
-    const candidate = `${trimmed.slice(0, 56)} ${index}`;
-    if (!existing.has(candidate)) return candidate;
-  }
-  return trimmed;
-};
+const draftName = (base: string): string => uniqueDraftName(
+  base, (state.loaded?.library.profiles ?? []).map(item => item.name), t('新方案'),
+);
 
 const useDraft = (draft: Draft, isNew = false) => {
   state.draft = { ...draft };
@@ -107,7 +101,7 @@ const run = async (work: () => Promise<void>) => {
   try {
     await work();
   } catch (error) {
-    notice(explainError(error, t), 'error');
+    notice(explainError(error), 'error');
     if (error instanceof ConflictError && state.review) state.reviewInvalid = true;
   } finally {
     state.busy = false;
@@ -141,7 +135,7 @@ const refresh = async () => {
     state.loaded = await repo.load(true);
   } catch (error) {
     if (state.review) state.reviewInvalid = true;
-    if (state.loaded) throw new Error(`${explainError(error, t)} ${t('当前仍显示上次读取结果')}${keepDraft ? t('，未保存草稿已保留') : ''}。`, { cause: error });
+    if (state.loaded) throw new Error(`${explainError(error)} ${t('当前仍显示上次读取结果')}${keepDraft ? t('，未保存草稿已保留') : ''}`, { cause: error });
     throw error;
   }
   if (!keepDraft) {
@@ -168,12 +162,12 @@ const select = (id: string) => guard(() => {
 
 const actions: Record<Action, () => void> = {
   refresh: () => { void run(refresh); },
-  new: () => guard(() => { useDraft({ name: uniqueDraftName(t('新方案')), content: '' }, true); view.focusName(); }),
-  copy: () => guard(() => { useDraft({ name: uniqueDraftName(`${state.draft.name.slice(0, 52)}${t(' 副本')}`), content: state.draft.content }, true); view.focusName(); }),
+  new: () => guard(() => { useDraft({ name: draftName(t('新方案')), content: '' }, true); view.focusName(); }),
+  copy: () => guard(() => { useDraft({ name: draftName(`${truncateName(state.draft.name, 52)}${t(' 副本')}`), content: state.draft.content }, true); view.focusName(); }),
   import: () => guard(() => view.pickFile()),
   importGlobal: () => guard(() => {
     if (!state.loaded || !state.loaded.global.exists) return;
-    useDraft({ name: uniqueDraftName(t('现有全局规则')), content: state.loaded.global.content }, true);
+    useDraft({ name: draftName(t('现有全局规则')), content: state.loaded.global.content }, true);
     notice(t('当前已将全局 AGENTS.md 读取为新草稿，保存后可纳入方案库。'), 'info');
     render();
     view.focusName();
@@ -325,8 +319,8 @@ const view = mountView(document.querySelector<HTMLElement>('#root')!, i18n, {
     void run(async () => {
       if (file.size > MAX_CONTENT * 4) throw new Error(t('导入文件过大，请使用不超过 100,000 字符的规则文件。'));
       const content = await file.text();
-      const name = uniqueDraftName(file.name.replace(/\.(md|txt)$/i, '').slice(0, 60) || t('导入方案'));
-      validateDraft(name, content, t);
+      const name = draftName(file.name.replace(/\.(md|txt)$/i, '').trim() || t('导入方案'));
+      validateDraft(name, content);
       useDraft({ name, content }, true);
       notice(t('已导入为草稿，保存后可预览启用。'));
     });
@@ -359,7 +353,7 @@ window.addEventListener('beforeunload', event => {
 
 host.onReady(context => {
   applyHostReady(context, document.documentElement);
-  const changed = i18n.setLocale(context.locale);
+  const changed = i18n.setLocale('en-US');
   applyDocumentLanguage(i18n);
   document.title = t('规则方案');
   if (!initialized) {

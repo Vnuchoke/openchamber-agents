@@ -9,6 +9,7 @@ import {
   type Tone,
 } from '@openchamber/sdk/ui';
 import type { I18n } from '../shared/i18n.ts';
+import { t as english } from './i18n.ts';
 import { diffLines } from '../core/diff.ts';
 import {
   GLOBAL_PATH,
@@ -67,7 +68,7 @@ export const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className = ''
   return node;
 };
 
-export const currentLabel = (loaded: Loaded, t: (source: string) => string = source => source): string => (
+export const currentLabel = (loaded: Loaded, t: (source: string) => string = english): string => (
   matchedProfile(loaded)?.name
   ?? (loaded.global.exists ? (loaded.global.content ? t('未匹配已保存方案') : t('全局规则为空')) : t('尚无全局规则文件'))
 );
@@ -93,12 +94,12 @@ export const mountView = (root: HTMLElement, i18n: I18n, callbacks: {
   file: (file: File) => void;
 }) => {
   const { t } = i18n;
-  const app = el('main', 'ext ext-container ag');
+  const app = el('div', 'ext ext-container ag');
   const header = el('header', 'ag-header');
   const heading = el('div', 'ag-heading');
   const statusMain = el('div', 'ag-status-main');
   const statusBadgeSlot = el('span', 'ag-badge-slot');
-  const title = el('h1', 'ag-title', t('正在连接 OpenChamber…'));
+  const title = el('h2', 'ag-title', t('正在连接 OpenChamber…'));
   statusMain.append(statusBadgeSlot, title);
   const refreshSlot = el('div', 'ag-header-actions');
   heading.append(statusMain, refreshSlot);
@@ -217,7 +218,7 @@ export const mountView = (root: HTMLElement, i18n: I18n, callbacks: {
     onChange: callbacks.tab,
   });
   const select = mountSelect(selectSlot, {
-    label: t('规则方案'),
+    label: t('规则方案选择'),
     value: null,
     options: [],
     searchable: true,
@@ -279,6 +280,7 @@ export const mountView = (root: HTMLElement, i18n: I18n, callbacks: {
     input.value = '';
   });
 
+  // Associate kit notes explicitly; the kit's wrapping label provides the visible label.
   for (const [slot, id] of [[nameSlot, 'name-note'], [editorSlot, 'content-note']] as const) {
     slot.querySelector('.oc-sdk-field-note')!.id = id;
     slot.querySelector('input,textarea')!.setAttribute('aria-describedby', id);
@@ -388,7 +390,7 @@ export const mountView = (root: HTMLElement, i18n: I18n, callbacks: {
     buttons.get('guardCancel')!.update({ label: t('继续编辑') });
     buttons.get('restore')!.update({ label: t('预览恢复') });
     tabs.update({ items: [{ id: 'profiles', label: t('方案') }, { id: 'backups', label: t('备份') }] });
-    select.update({ label: t('规则方案'), searchPlaceholder: t('搜索方案…'), placeholder: t('新建方案') });
+    select.update({ label: t('规则方案选择'), searchPlaceholder: t('搜索方案…'), placeholder: t('新建方案') });
     name.update({ label: t('方案名称'), placeholder: t('例如：日常开发') });
     editor.update({ label: t('规则内容 · Markdown'), placeholder: t('# 开发约定\n\n在这里填写全局工作规则…') });
     headingJump.update({ placeholder: t('章节速跳…') });

@@ -18,7 +18,7 @@ document.head.append(style);
 installScrollbarActivity(document);
 
 const host = connectHost();
-const repo = createRepository(hostFiles(host, t), Date.now, () => crypto.randomUUID(), t);
+const repo = createRepository(hostFiles(host));
 const app = el('section', 'ext ag-section');
 const dot = el('span', 'ag-status-dot');
 const title = el('p', 'ag-status-value', t('正在读取…'));
@@ -50,7 +50,7 @@ const triggerManage = () => {
   void openManager(host, { id: 'agents-manager', name: t('规则方案') }).catch(error => {
     message.hidden = false;
     message.dataset.tone = 'error';
-    message.textContent = error instanceof Error ? error.message : explainError(error, t);
+    message.textContent = explainError(error);
   });
 };
 
@@ -96,7 +96,7 @@ const refresh = async () => {
     dot.dataset.tone = 'error';
     title.textContent = t('未读取');
     note.textContent = t('全局 AGENTS.md');
-    message.textContent = explainError(error, t);
+    message.textContent = explainError(error);
     message.dataset.tone = 'error';
     message.hidden = false;
   } finally {
@@ -128,7 +128,7 @@ new ResizeObserver(() => {
 
 host.onReady(context => {
   applyHostReady(context, document.documentElement);
-  const changed = i18n.setLocale(context.locale);
+  const changed = i18n.setLocale('en-US');
   applyDocumentLanguage(i18n);
   rowLabel.textContent = t('当前方案');
   note.title = t('仅表示当前连接服务器的文件状态，不代表已有会话已加载规则。');

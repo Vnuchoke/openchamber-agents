@@ -17,34 +17,37 @@ English | [简体中文](#简体中文)
 - Uses SDK 2.7.2; on OpenChamber 2.7.0+ non-Latin-1 project paths work through the fixed directory-header encoding.
 - Work Status header controls republish after a project or session directory change, so Refresh / Manage stay visible without folding the section.
 
-- Panel and Work Status copy follow the host language (Simplified Chinese or English).
 ### Screenshot
 
 <img src="docs/screenshots/panel.jpg" alt="AGENTS.md Manager panel" width="420">
 
-*Synthetic preview with sample rules. No real global rules are read or changed.*
+*Historical screenshot of the Chinese UI with sample rules. The current UI is English. No real global rules are read or changed in the preview.*
 
 ### Install
 
 In OpenChamber, open **Settings → Extensions → Add extension** and paste:
 
 ```text
-https://github.com/chenyuhao0628/openchamber-agents
+https://github.com/Vnuchoke/openchamber-agents
 ```
+
+Git installation gets the English UI once it is merged into the fork's default branch. Until then, use a local folder or ZIP from the English build. [Upstream project](https://github.com/chenyuhao0628/openchamber-agents).
 
 Requires OpenChamber **2.4.0 or newer**; **2.7.0** is recommended for projects with non-Latin-1 folder names. This extension manages rule text, not OpenCode's agent selector.
 
-> The panel and Work Status copy follow the host language (Simplified Chinese or English). The full Chinese documentation is below.
+> The extension UI is English, regardless of the host locale. Existing profile names, rules and backups are preserved without translation or migration. Chinese documentation is below; a [Russian guide](https://github.com/Vnuchoke/openchamber-agents/blob/HEAD/README.ru.md) is also available.
 
 ---
 
 ## 简体中文
 
-当前版本 **0.2.2**，核对日期 **2026-11-16**。面板文案跟随宿主语言在简体中文和英文间切换。在 OpenChamber 中管理多个全局 `AGENTS.md` 方案：编辑、Token 预算估算、Markdown 大纲快速跳转、未匹配实际全局规则时的纳管与只读对比、差异预览、启用、备份恢复。支持右侧独立面板和工作状态摘要，跟随宿主主题。
+当前版本 **0.2.3**，上游核对日期 **2026-11-16**。在 OpenChamber 中管理多个全局 `AGENTS.md` 方案：编辑、Token 预算估算、Markdown 大纲快速跳转、未匹配实际全局规则时的纳管与只读对比、差异预览、启用、备份恢复。支持右侧独立面板和工作状态摘要，跟随宿主主题。
+
+界面现为英文：侧栏 **AGENTS.md Manager**，状态分区 **Global Rules**。上述日期及下文实机记录为原版历史检查，不代表本次英文界面已经在实机验证。现有方案名称、规则正文和历史备份不自动翻译或迁移。
 
 0.2.2 将 `@openchamber/sdk` 升级至 `2.7.2`（支持宿主字体缩放 `len()` 几何样式与最新校验契约）。
 
-0.2.1 修复工作状态分区的标题行控件在目录变化（切换项目、会话目录解析完成）后不重新发布、导致「刷新 / 管理」偶尔消失并需折叠重开的问题；现在会在宿主重新发送 `ready` 或 `directory` 时重新发布控件，并按 `features.statusControls` 判断宿主支持。
+0.2.1 修复工作状态分区的标题行控件在目录变化（切换项目、会话目录解析完成）后不重新发布、导致 **Refresh / Manage** 偶尔消失并需折叠重开的问题；现在会在宿主重新发送 `ready` 或 `directory` 时重新发布控件，并按 `features.statusControls` 判断宿主支持。
 
 > 本仓库只发布扩展框架，不包含任何实际全局规则内容。首次打开会读取本机现有的 `~/.config/opencode/AGENTS.md` 作为方案来源。
 
@@ -57,10 +60,12 @@ Requires OpenChamber **2.4.0 or newer**; **2.7.0** is recommended for projects w
 在 OpenChamber **设置 → 扩展 → 添加扩展** 中粘贴：
 
 ```text
-https://github.com/chenyuhao0628/openchamber-agents
+https://github.com/Vnuchoke/openchamber-agents
 ```
 
 设置页会按仓库根 `package.json` 的 `version` 检查更新。有新版本时，卡片会显示「更新」。只有 Git URL 安装会自动更新；文件夹和 zip 安装需要手动替换。
+
+英文界面合入 fork 的默认分支后可通过 Git URL 安装；合入前请使用包含英文构建的本地文件夹或 ZIP。
 
 ### 从文件夹安装（开发）
 
@@ -79,14 +84,14 @@ https://github.com/chenyuhao0628/openchamber-agents
 
 ## 日常使用
 
-1. 从右侧「规则方案」或工作状态「全局规则 → 管理」进入。两个入口共用同一侧栏编辑器。无项目会话请直接点击右侧「规则方案」图标；原版宿主 2.4.0 的工作状态「管理」入口仍无响应，该限制暂时保留，原因见[已知限制](#已知限制)。首次打开完整面板，将已有全局文本复制为“现有全局规则”；此操作不改写全局文件。仅打开状态摘要不会创建方案库。
-2. **新建、复制、导入**产生草稿。名称及 Markdown 可直接编辑。导入使用 `.md` / `.txt` 文件；内容始终按文本处理，不渲染 HTML、不执行规则。
-3. **保存方案**只更新方案库，支持 `⌘S` / `Ctrl+S`。切换方案、新建或导入遇到未保存内容时，可以保存后继续、放弃修改或继续编辑。切换页签和主题保留草稿；关闭/重载面板后不保证草稿恢复，请先保存。
-4. **预览启用**显示与最新全局文件的逐行差异；确认后备份原文，再次检查文件、原子写入并回读。内容相同时不用写入。空内容会明确提示清空文件。
-5. **方案管理**提供归档/恢复、显示归档和导出。归档可恢复，与实际全局文件内容一致的方案不能归档。导出写到连接服务器的数据目录，并显示路径。
-6. **备份**中选择时间，查看原文，再「预览恢复 → 确认恢复」。恢复前也会备份当前文件。
+1. 从右侧 **AGENTS.md Manager** 或工作状态 **Global Rules → Manage** 进入。两个入口共用同一侧栏编辑器。无项目会话请直接点击右侧图标；原版宿主 2.4.0 的 **Manage** 入口仍无响应，原因见[已知限制](#已知限制)。首次打开完整面板，将已有全局文本复制为 **Existing global rules**；此操作不改写全局文件。仅打开状态摘要不会创建方案库。
+2. **New / Copy / Import** 产生草稿。名称及 Markdown 可直接编辑。导入使用 `.md` / `.txt` 文件；内容始终按文本处理，不渲染 HTML、不执行规则。
+3. **Save profile** 只更新方案库，支持 `⌘S` / `Ctrl+S`。切换方案、新建或导入遇到未保存内容时，可选 **Save and continue / Discard changes / Keep editing**。切换页签和主题保留草稿；关闭/重载面板后不保证草稿恢复，请先保存。
+4. **Preview activation** 显示与最新全局文件的逐行差异；**Confirm activation** 后备份原文，再次检查文件、原子写入并回读。内容相同时不用写入。空内容会明确提示清空文件。
+5. **Profile management** 提供 **Archive / Unarchive / Show archived / Export file**。归档可恢复，与实际全局文件内容一致的方案不能归档。导出写到连接服务器的数据目录，并显示路径。
+6. **Backups** 中选择时间，查看原文，再 **Preview restore → Confirm restore**。恢复前也会备份当前文件。
 
-顶部显示与实际文件内容匹配的方案，或者“未匹配已保存方案”“全局规则为空”等状态。它不是会话已加载规则的证明。项目内规则仍由 OpenCode 按自己的规则加载机制处理；已有会话的重载行为未验证，启用后建议在新会话确认。
+顶部显示与实际文件内容匹配的方案，或者 **No matching saved profile / Global rules are empty** 等状态。全局规则未匹配时，可用 **Load global as draft** 创建草稿，或用 **Compare with global** 查看只读差异；这两个操作都不改写全局文件。顶部状态不是会话已加载规则的证明。项目内规则仍由 OpenCode 按自己的规则加载机制处理；已有会话的重载行为未验证，启用后建议在新会话确认。
 
 ## 数据与故障处理
 
@@ -101,7 +106,7 @@ https://github.com/chenyuhao0628/openchamber-agents
 - 每个方案最多 100,000 字符、名称最多 60 字符；最多 100 个方案，包含归档；方案库序列化上限 1,500,000 字符。初次导入超大现有规则会报错并保持原文件。
 - 列表显示宿主列目录结果中最近 50 份备份。备份包含完整原文，受 SDK 单文件 2,000,000 字符上限约束；备份失败会阻止全局写入。原文件不存在时直接创建，SDK 没有删除接口，所以不提供“恢复为文件不存在”。
 - 差异按行计算，超大变更使用整块替换表示，最多展示 400 行；超过部分明确标注，可返回编辑器或备份原文检查。CRLF/LF 差异会单独提示，保存不主动改换行。
-- 权限、格式或读取失败不能当作空库。方案库损坏时保留原文件并报错。外部编辑会使预览失效，需返回重新预览；方案库冲突时「重新读取」保留草稿，再根据新状态决定保存。
+- 权限、格式或读取失败不能当作空库。方案库损坏时保留原文件并报错。外部编辑会使预览失效，需返回重新预览；方案库冲突时 **Refresh** 保留草稿，再根据新状态决定保存。
 - SDK 写入使用临时文件加原子替换，但没有比较并交换或跨窗口锁。读前复核和写后校验能检测常见冲突，**不能保证多编辑器同时写入时绝对不丢失更新**。操作失败或超时后先重新读取实际状态，不盲目重试覆盖。
 - 方案、备份和导出均含完整文本。遵循当前服务器的文件权限；扩展不额外实现加密或 `chmod`。不要把凭据写入规则。
 
@@ -111,11 +116,11 @@ https://github.com/chenyuhao0628/openchamber-agents
 
 **OpenChamber 2.7.0 已修复这条路径。** 2.7.0 的 `guestFileOperation` 改为把目录作为普通 header 条目交给 `runtimeFetch`；`runtimeFetch` 对非 Latin-1 值做 `encodeURIComponent`，并附加 `x-opencode-directory-encoding: uri` 供服务端解码。源码位置：[2.7.0 files.ts](https://github.com/openchamber/openchamber/blob/v2.7.0/packages/ui/src/lib/guests/files.ts) 与 [runtime-fetch.ts](https://github.com/openchamber/openchamber/blob/v2.7.0/packages/ui/src/lib/runtime-fetch.ts)。0.1.8 已升级到 SDK 2.7.0；在 2.7.0 宿主上，中文项目路径应恢复正常读写。真实宿主仍建议用含中文路径的新会话做一次人工复测，不能只凭源码核对宣告所有远程/旧版环境都通过。
 
-0.1.5 保留的错误诊断仍有意义：它会指出失败的是全局规则、方案库还是备份，并在旧宿主上显示中文原因。重新读取核心文件失败时保留已有内容和草稿，明确标注仍为上次读取结果；写入失败不鼓励盲目重复提交。只记录错误类型与目录字符类别，不输出目录原文或规则内容。
+0.1.5 开始指出失败的是全局规则、方案库还是备份；当时的原因说明为中文，当前说明为英文。重新读取核心文件失败时保留已有内容和草稿，明确标注仍为上次读取结果；写入失败不鼓励盲目重复提交。只记录错误类型与目录字符类别，不输出目录原文或规则内容。
 
 ## 已知限制
 
-- 无项目会话中，工作状态「管理」入口可能无响应；请直接点击右侧「规则方案」图标。
+- 无项目会话中，**Global Rules → Manage** 入口可能无响应；请直接点击右侧 **AGENTS.md Manager** 图标。
 - 2.7.0 之前的宿主仍可能在中文等非 Latin-1 项目路径下失败；2.7.0 已修复，建议升级后复测。
 
 ## 开发与验证
@@ -127,7 +132,7 @@ npm test
 npm run preview
 ```
 
-`npm test` 先构建 `panel/main.js` / `panel/section.js`，再运行 Node 测试。`npm run share` 先构建面板脚本，再按宿主 zip 安装限制生成可分发的 `dist/openchamber-agents-<版本>.zip`，并在读回归档复核成员、CRC 与内容后输出校验值。预览脚本只在 `127.0.0.1` 服务本扩展构建产物，所有文件接口通过浏览器内存中的合成数据模拟，**不读取真实全局文件**。终端输出随机端口；可用 `PREVIEW_PORT` 指定端口。支持主题、400/280px 宽度、外部修改、备份失败、权限不足和状态分区切换；URL 的 `state=empty|denied|corrupt` 可检查异常初始状态；`directory=unicode` 或「模拟中文目录」可复现文件请求头错误；`surface=status&directory=none` 复现原版宿主无项目时的导航缺陷；预览只模拟原版行为，不能用它声称实机已修复。
+`npm test` 先构建 `panel/main.js` / `panel/section.js`，再运行 Node 测试。`npm run share` 先构建面板脚本，再按宿主 zip 安装限制生成可分发的 `dist/openchamber-agents-<版本>.zip`，并在读回归档复核成员、CRC 与内容后输出校验值。预览脚本只在 `127.0.0.1` 服务本扩展构建产物，所有文件接口通过浏览器内存中的合成数据模拟，**不读取真实全局文件**。终端输出随机端口；可用 `PREVIEW_PORT` 指定端口。支持主题、400/280px 宽度、外部修改、备份失败、权限不足和状态分区切换；URL 的 `state=empty|denied|corrupt` 可检查异常初始状态；`directory=unicode` 或 **Simulate Unicode directory** 可复现文件请求头错误；`surface=status&directory=none` 复现原版宿主无项目时的导航缺陷；预览只模拟原版行为，不能用它声称实机已修复。
 
 | 目录 | 职责 |
 | --- | --- |
