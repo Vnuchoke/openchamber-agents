@@ -78,6 +78,9 @@ export const createRepository = (files: Files, now = Date.now, uuid: () => strin
     return { name: profile.name, content: profile.content, before: await readGlobal(), source: 'profile', profileId: profile.id };
   };
   const apply = async (loaded: Loaded, review: Review): Promise<{ global: Snapshot; backup: string | null }> => {
+    if (review.readonly) {
+      throw new Error('Read-only diff previews cannot be applied. Save the profile first, then preview activation.');
+    }
     if (review.source === 'profile') {
       await sameRaw(files, loaded.raw);
       const profile = loaded.library.profiles.find(item => item.id === review.profileId && !item.archived);

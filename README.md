@@ -8,12 +8,14 @@ English | [简体中文](#简体中文)
 
 ### Highlights
 
-- Library of rule profiles with create, duplicate, import, archive and export.
-- Line-by-line diff before activation; automatic backup and restore.
+- Library of rule profiles with create, duplicate, import, archive, export and one-click rule copy.
+- Live line/character counts, estimated context-token budget indicator, and Markdown heading quick jump.
+- Unmatched live `AGENTS.md` banner to adopt external changes as a new profile or inspect a read-only diff before activation; automatic backup and restore.
 - Detects external edits, corrupted libraries and permission errors instead of silently overwriting.
 - No background service, model calls, session sending or network requests.
 - Only touches `~/.config/opencode/AGENTS.md` and `~/.config/openchamber/agents-manager/**`.
-- Uses SDK 2.7.0; on OpenChamber 2.7.0 non-Latin-1 project paths work through the fixed directory-header encoding.
+- Uses SDK 2.7.2; on OpenChamber 2.7.0+ non-Latin-1 project paths work through the fixed directory-header encoding.
+- Work Status header controls republish after a project or session directory change, so Refresh / Manage stay visible without folding the section.
 
 ### Screenshot
 
@@ -37,9 +39,13 @@ Requires OpenChamber **2.4.0 or newer**; **2.7.0** is recommended for projects w
 
 ## 简体中文
 
-当前版本 **0.1.8**，上游核对日期 **2026-11-08**。在 OpenChamber 中管理多个全局 `AGENTS.md` 方案：编辑、差异预览、启用、备份恢复。支持右侧独立面板和工作状态摘要，跟随宿主主题。
+当前版本 **0.2.2**，上游核对日期 **2026-11-16**。在 OpenChamber 中管理多个全局 `AGENTS.md` 方案：编辑、Token 预算估算、Markdown 大纲快速跳转、未匹配实际全局规则时的纳管与只读对比、差异预览、启用、备份恢复。支持右侧独立面板和工作状态摘要，跟随宿主主题。
 
 界面现为英文：侧栏 **AGENTS.md Manager**，状态分区 **Global Rules**。上述日期及下文实机记录为原版历史检查，不代表本次英文界面已经在实机验证。现有方案名称、规则正文和历史备份不自动翻译或迁移。
+
+0.2.2 将 `@openchamber/sdk` 升级至 `2.7.2`（支持宿主字体缩放 `len()` 几何样式与最新校验契约）。
+
+0.2.1 修复工作状态分区的标题行控件在目录变化（切换项目、会话目录解析完成）后不重新发布、导致 **Refresh / Manage** 偶尔消失并需折叠重开的问题；现在会在宿主重新发送 `ready` 或 `directory` 时重新发布控件，并按 `features.statusControls` 判断宿主支持。
 
 > 本仓库只发布扩展框架，不包含任何实际全局规则内容。首次打开会读取本机现有的 `~/.config/opencode/AGENTS.md` 作为方案来源。
 
@@ -70,7 +76,7 @@ https://github.com/chenyuhao0628/openchamber-agents
 
 分享给其他用户时，在扩展目录执行 `npm run share`，构建后生成 `dist/openchamber-agents-<版本>.zip`；接收方在 **设置 → 扩展 → 添加扩展** 中选择该 zip 即可安装（无需解压），zip 内附 `安装说明.md` 与完整 README。发行包只包含宿主安装所需的清单、两个 HTML 入口、两个面板脚本与两份说明文档，不含源码、测试与依赖。
 
-清单保守要求 OpenChamber `>=2.4.0`，开发 SDK 为 `2.7.0`。本机此前验证环境为 OpenChamber 2.4.0；2.7.0 已修复非 Latin-1 项目路径的目录请求头，建议在 2.7.0 上使用。SDK 版本与宿主版本是两回事，版本声明不代表所有版本均验证。此扩展没有后台服务、模型调用、会话发送和网络请求权限。若宿主提示文件授权不足，在扩展设置检查声明范围。
+清单保守要求 OpenChamber `>=2.4.0`，开发 SDK 为 `2.7.2`。本机此前验证环境为 OpenChamber 2.4.0；2.7.0+ 已修复非 Latin-1 项目路径的目录请求头，建议在 2.7.0 及以上版本使用。SDK 版本与宿主版本是两回事，版本声明不代表所有版本均验证。此扩展没有后台服务、模型调用、会话发送和网络请求权限。若宿主提示文件授权不足，在扩展设置检查声明范围。
 
 ## 日常使用
 
@@ -81,7 +87,7 @@ https://github.com/chenyuhao0628/openchamber-agents
 5. **Profile management** 提供 **Archive / Unarchive / Show archived / Export file**。归档可恢复，与实际全局文件内容一致的方案不能归档。导出写到连接服务器的数据目录，并显示路径。
 6. **Backups** 中选择时间，查看原文，再 **Preview restore → Confirm restore**。恢复前也会备份当前文件。
 
-顶部显示与实际文件内容匹配的方案，或者 **No matching saved profile / Global rules are empty** 等状态。它不是会话已加载规则的证明。项目内规则仍由 OpenCode 按自己的规则加载机制处理；已有会话的重载行为未验证，启用后建议在新会话确认。
+顶部显示与实际文件内容匹配的方案，或者 **No matching saved profile / Global rules are empty** 等状态。全局规则未匹配时，可用 **Load global as draft** 创建草稿，或用 **Compare with global** 查看只读差异；这两个操作都不改写全局文件。顶部状态不是会话已加载规则的证明。项目内规则仍由 OpenCode 按自己的规则加载机制处理；已有会话的重载行为未验证，启用后建议在新会话确认。
 
 ## 数据与故障处理
 
