@@ -94,12 +94,12 @@ export const mountView = (root: HTMLElement, i18n: I18n, callbacks: {
   file: (file: File) => void;
 }) => {
   const { t } = i18n;
-  const app = el('main', 'ext ext-container ag');
+  const app = el('div', 'ext ext-container ag');
   const header = el('header', 'ag-header');
   const heading = el('div', 'ag-heading');
   const statusMain = el('div', 'ag-status-main');
   const statusBadgeSlot = el('span', 'ag-badge-slot');
-  const title = el('h1', 'ag-title', t('正在连接 OpenChamber…'));
+  const title = el('h2', 'ag-title', t('正在连接 OpenChamber…'));
   statusMain.append(statusBadgeSlot, title);
   const refreshSlot = el('div', 'ag-header-actions');
   heading.append(statusMain, refreshSlot);
